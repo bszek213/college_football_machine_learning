@@ -1,0 +1,27 @@
+name: cfb
+channels:
+- conda-forge
+- robostack
+- anaconda
+- intel
+- rapidsai
+dependencies:
+- hvplot
+- numpy
+- pandas
+- holoviews
+- scikit-learn
+- scipy
+- ipython
+- plotly
+- seaborn
+- ipywidgets
+- ipykernel
+- matplotlib
+- spyder
+- notebook
+- keyboard
+- pip
+- pip:
+  - sportsipy
+  - beautifulsoup4
