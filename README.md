@@ -14,8 +14,6 @@ python cfb_ml.py
 ```
 ### Current prediction accuracies
 ```python
-python cfb_ml.py
-
 Gradclass 0.7590361445783133
 RandForclass 0.7469879518072289
 DecTreeclass 0.6837349397590361
