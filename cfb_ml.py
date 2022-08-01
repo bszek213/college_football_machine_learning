@@ -20,7 +20,7 @@ from sklearn.linear_model import Perceptron
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score
 import time
-from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import GridSearchCV
 from scipy.stats import uniform
 class cfb:
     def __init__(self):
@@ -85,7 +85,19 @@ class cfb:
 
     def machine(self):
         Gradclass = GradientBoostingClassifier()
-        Gradclass.fit(self.x_train,self.y_train)
+        Grad_perm = {
+            'loss' : ['deviance', 'exponential'],
+            'learning_rate': np.arange(0.1, .5, 0.1, dtype=float),
+            'n_estimators': range(100,500,100),
+            'criterion' : ['friedman_mse', 'squared_error', 'mse', 'mae'],
+            'max_depth': np.arange(1, 5, 1, dtype=int),
+            'max_features' : ['auto', 'sqrt', 'log2']
+            }
+        clf = GridSearchCV(Gradclass, Grad_perm, scoring=['accuracy'],
+                           refit='accuracy',cv=5, verbose=4)
+        search_Grad = clf.fit(self.x_train,self.y_train)
+        print(search_Grad.best_params_)
+        
         
         RandForclass = RandomForestClassifier()
         RandForclass.fit(self.x_train,self.y_train)
@@ -96,11 +108,17 @@ class cfb:
         SVCclass = SVC()
         SVCclass.fit(self.x_train,self.y_train)
         
-        LogReg = LogisticRegression(max_iter=5000)
-        distributions = dict(C=uniform(loc=0, scale=4),penalty=['l2', 'l1'])
-        clf = RandomizedSearchCV(LogReg, distributions, random_state=0)
-        search = clf.fit(self.x_train,self.y_train)
-        print(search.best_params_)
+        LogReg = LogisticRegression()
+        log_reg_perm = {
+            'penalty': ['l2'],
+            'C': np.arange(1, 5, 0.5, dtype=float),
+            'max_iter': range(100,1000,100),
+            'solver': ['lbfgs', 'liblinear', 'sag', 'saga']
+            }
+        clf = GridSearchCV(LogReg, log_reg_perm, scoring=['accuracy'],
+                           refit='accuracy',cv=5, verbose=4)
+        search_Log = clf.fit(self.x_train,self.y_train)
+        print(search_Log.best_params_)
         
         MLPClass = MLPClassifier()
         MLPClass.fit(self.x_train,self.y_train)
@@ -111,11 +129,11 @@ class cfb:
         PerClass = Perceptron()
         PerClass.fit(self.x_train,self.y_train)
         
-        Gradclass_err = accuracy_score(self.y_test, Gradclass.predict(self.x_test))
+        Gradclass_err = accuracy_score(self.y_test, search_Grad.predict(self.x_test))
         RandForclass_err = accuracy_score(self.y_test, RandForclass.predict(self.x_test))
         DecTreeclass_err = accuracy_score(self.y_test, DecTreeclass.predict(self.x_test))
         SVCclass_err = accuracy_score(self.y_test, SVCclass.predict(self.x_test))
-        LogReg_err = accuracy_score(self.y_test, search.predict(self.x_test))
+        LogReg_err = accuracy_score(self.y_test, search_Log.predict(self.x_test))
         MLPClass_err = accuracy_score(self.y_test, MLPClass.predict(self.x_test))
         KClass_err = accuracy_score(self.y_test, KClass.predict(self.x_test))
         PerClass_err = accuracy_score(self.y_test, PerClass.predict(self.x_test))

@@ -14,14 +14,14 @@ python cfb_ml.py
 ```
 ### Current prediction accuracies
 ```python
-Gradclass 0.7590361445783133
-RandForclass 0.7469879518072289
-DecTreeclass 0.6837349397590361
-SVCclass 0.7891566265060241
-LogReg 0.7771084337349398
-MLPClass 0.7560240963855421
-KClass 0.7439759036144579
-PerClass 0.7680722891566265
+Gradclass 0.7680722891566265
+RandForclass 0.786144578313253
+DecTreeclass 0.7349397590361446
+SVCclass 0.7710843373493976
+LogReg 0.7801204819277109
+MLPClass 0.7801204819277109
+KClass 0.7771084337349398
+PerClass 0.6234939759036144
 ```
 ### Correlation Matrix
 ![](https://github.com/bszek213/college_football_machine_learning/blob/master/correlations.png)
