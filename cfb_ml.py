@@ -8,7 +8,7 @@ from sportsipy.ncaaf.teams import Teams
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.ensemble import GradientBoostingClassifier,RandomForestClassifier
@@ -16,14 +16,22 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import Perceptron
+# from sklearn.linear_model import Perceptron
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score
 import time
 from sklearn.model_selection import GridSearchCV
-from scipy.stats import uniform
+# from scipy.stats import uniform
 from os import getcwd
 from os.path import join, exists
+from scipy import stats
+from sklearn.preprocessing import LabelEncoder
+from keras.wrappers.scikit_learn import KerasClassifier
+from keras.utils import np_utils
+# for modeling
+from keras.models import Sequential
+from keras.layers import Dense, Dropout
+from keras.callbacks import EarlyStopping
 class cfb:
     def __init__(self):
         print('initialize class cfb')
@@ -38,7 +46,7 @@ class cfb:
         final_dir = join(getcwd(), 'all_data.csv')
         isExists = exists(final_dir)
         if isExists == False:
-            year_list = [2021,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010]
+            year_list = [2021,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010,2009,2008,2007]
             for year in year_list:
                 all_teams = Teams(year)
                 team_names = all_teams.dataframes.abbreviation
@@ -64,34 +72,93 @@ class cfb:
     def split(self):
         self.y = self.all_data['game_result']
         self.x = self.all_data.drop(columns=['game_result'])
-        self.correlate_analysis()
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x,self.y, train_size=0.8)
+        self.pre_process()
 
-    def correlate_analysis(self):
+    def pre_process(self):
+        #drop irrelavent column
+        if 'Unnamed: 0' in self.x.columns:
+            self.x = self.x.drop(columns=['Unnamed: 0'])
+        
+        # Find features with correlation greater than 0.90
         corr_matrix = np.abs(self.x.astype(float).corr())
         upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool))
-        # Find features with correlation greater than 0.85
-        to_drop = [column for column in upper.columns if any(upper[column] >= 0.85)]
-        # print('drop these:', to_drop)
+        to_drop = [column for column in upper.columns if any(upper[column] >= 0.90)]
         self.drop_cols = to_drop
         self.x_no_corr = self.x.drop(columns=to_drop)
+        cols = self.x_no_corr.columns
+        
+        #Remove outliers with 1.5 +/- IQR
+        print(f'old feature dataframe shape before outlier removal: {self.x_no_corr.shape}')
+        for col_name in cols:
+            Q1 = np.percentile(self.x_no_corr[col_name], 25)
+            Q3 = np.percentile(self.x_no_corr[col_name], 75)
+            IQR = Q3 - Q1
+            upper = np.where(self.x_no_corr[col_name] >= (Q3+1.5*IQR))
+            lower = np.where(self.x_no_corr[col_name] <= (Q1-1.5*IQR)) 
+            self.x_no_corr.drop(upper[0], inplace = True)
+            self.x_no_corr.drop(lower[0], inplace = True)
+            self.y.drop(upper[0], inplace = True)
+            self.y.drop(lower[0], inplace = True)
+            if 'level_0' in self.x_no_corr.columns:
+                self.x_no_corr.drop(columns=['level_0'],inplace = True)
+            self.x_no_corr.reset_index(inplace = True)
+            self.y.reset_index(inplace = True, drop=True)
+        self.x_no_corr.drop(columns=['level_0','index'],inplace = True)
+        print(f'new feature dataframe shape after outlier removal: {self.x_no_corr.shape}')
 
+        #split data into train and test
+        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x_no_corr,self.y, train_size=0.8)
+        
         #Create new scaled data - DO I REMOVE THE VARIABLES THAT ARE HIGHLY 
         # CORRELATED BEFORE I STANDARDIZE THEM OR STANDARDIZE AND THEN REMOVE
         # HIGHLY CORRELATED
-        scaler = MinMaxScaler()
-        scaled_data = scaler.fit_transform(self.x_no_corr)
-        cols = self.x_no_corr.columns
-        self.x = pd.DataFrame(scaled_data, columns = cols)
+        # scaler = MinMaxScaler(feature_range=(0, 1))
+        # scaled_data = scaler.fit_transform(self.x_train)
+        scaler = StandardScaler()
+        scaled_data = scaler.fit(self.x_no_corr).transform(self.x_no_corr)
+        self.x_train = pd.DataFrame(scaled_data, columns = cols)
         
+        #Probability plots after or before scaling the data? Right now I am 
+        # doing it after scaling
+        # Peform a box cox transform
+        # use z-score?
+        # stats.zscore(x, axis=1, nan_policy='omit')
+        for col_name in cols:
+            # self.x_train[col_name], _ = stats.boxcox(self.x_train[col_name])
+            self.prob_plots(col_name)
+        #plot heat map
         top_corr_features = corr_matrix.index
         plt.figure(figsize=(20,20))
-        #plot heat map
         g=sns.heatmap(corr_matrix[top_corr_features],annot=True,cmap="RdYlGn")
         plt.savefig('correlations.png')
         plt.close()
 
     def machine(self):
+        #Keras classifier 
+        model = Sequential()
+        model.add(Dense(4, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
+        model.add(Dense(4, activation='relu'))
+        model.add(Dense(1, activation='sigmoid'))
+        model.summary() 
+        #compile 
+        model.compile(optimizer='Adam', 
+              loss='binary_crossentropy',
+              metrics=['accuracy'])
+        #stop training when the model has not improved after 10 steps
+        es = EarlyStopping(monitor='val_accuracy', 
+                                   mode='max', # don't minimize the accuracy!
+                                   patience=10,
+                                   restore_best_weights=True)
+        history = model.fit(self.x_train,
+                    self.y_train,
+                    callbacks=[es],
+                    epochs=80, # you can set this to a big number!
+                    batch_size=10,
+                    validation_split=0.2,
+                    shuffle=True,
+                    verbose=1)
+        keras_acc = history.history['accuracy']
+
         Gradclass = GradientBoostingClassifier()
         Grad_perm = {
             'loss' : ['deviance', 'exponential'],
@@ -102,7 +169,7 @@ class cfb:
             'max_features' : ['auto', 'sqrt', 'log2']
             }
         clf = GridSearchCV(Gradclass, Grad_perm, scoring=['accuracy'],
-                           refit='accuracy',cv=5, verbose=4)
+                           refit='accuracy',cv=5, verbose=4, n_jobs=-1)
         search_Grad = clf.fit(self.x_train,self.y_train)
         
         RandForclass = RandomForestClassifier()
@@ -113,7 +180,7 @@ class cfb:
             'max_features' : ['auto', 'sqrt', 'log2']
             }
         clf_rand = GridSearchCV(RandForclass, Rand_perm, scoring=['accuracy'],
-                           refit='accuracy',cv=5, verbose=4)
+                           refit='accuracy',cv=5, verbose=4, n_jobs=-1)
         search_rand = clf_rand.fit(self.x_train,self.y_train)
         # RandForclass.fit(self.x_train,self.y_train)
         
@@ -125,7 +192,7 @@ class cfb:
             'max_features' : ['auto', 'sqrt', 'log2']
             }
         clf_dec = GridSearchCV(DecTreeclass, Dec_perm, scoring=['accuracy'],
-                           refit='accuracy',cv=5, verbose=4)
+                           refit='accuracy',cv=5, verbose=4, n_jobs=-1)
         search_dec = clf_dec.fit(self.x_train,self.y_train)
         
         # DecTreeclass.fit(self.x_train,self.y_train)
@@ -138,7 +205,7 @@ class cfb:
             'tol': np.arange(0.001, 0.01, 0.001,dtype=float),
             }
         clf_SVC = GridSearchCV(SVCclass, SVC_perm, scoring=['accuracy'],
-                           refit='accuracy',cv=5, verbose=4)
+                           refit='accuracy',cv=5, verbose=4, n_jobs=-1)
         search_SVC = clf_SVC.fit(self.x_train,self.y_train)
         # SVCclass.fit(self.x_train,self.y_train)
         
@@ -150,7 +217,7 @@ class cfb:
             'solver': ['lbfgs', 'liblinear', 'sag', 'saga']
             }
         clf_Log = GridSearchCV(LogReg, log_reg_perm, scoring=['accuracy'],
-                           refit='accuracy',cv=5, verbose=4)
+                           refit='accuracy',cv=5, verbose=4, n_jobs=-1)
         search_Log = clf_Log.fit(self.x_train,self.y_train)
         
         MLPClass = MLPClassifier()
@@ -162,7 +229,7 @@ class cfb:
             'tol': np.arange(0.001, 0.005, 0.001, dtype=float)
             }
         clf_MLP = GridSearchCV(MLPClass, MLP_perm, scoring=['accuracy'],
-                           refit='accuracy',cv=5, verbose=4)
+                           refit='accuracy',cv=5, verbose=4, n_jobs=-1)
         search_MLP= clf_MLP.fit(self.x_train,self.y_train)
         # MLPClass.fit(self.x_train,self.y_train)
         
@@ -174,13 +241,12 @@ class cfb:
             'p' : [1,2]
             }
         clf_KClass = GridSearchCV(KClass, KClass_perm, scoring=['accuracy'],
-                           refit='accuracy',cv=5, verbose=4)
+                           refit='accuracy',cv=5, verbose=4, n_jobs=-1)
         search_KClass= clf_KClass.fit(self.x_train,self.y_train)
         # KClass.fit(self.x_train,self.y_train)
         
         # PerClass = Perceptron() #Terrible model for these data
         # PerClass.fit(self.x_train,self.y_train)
-        
         Gradclass_err = accuracy_score(self.y_test, search_Grad.predict(self.x_test))
         RandForclass_err = accuracy_score(self.y_test, search_rand.predict(self.x_test))
         DecTreeclass_err = accuracy_score(self.y_test, search_dec.predict(self.x_test))
@@ -190,22 +256,42 @@ class cfb:
         KClass_err = accuracy_score(self.y_test, search_KClass.predict(self.x_test))
         # PerClass_err = accuracy_score(self.y_test, PerClass.predict(self.x_test))
 
-        print('Removed features (>0.85 correlation): ', self.drop_cols)
+        print('Removed features (>=0.90 correlation): ', self.drop_cols)
         print('GradientBoostingClassifier - best params: ',search_Grad.best_params_)
-        print('RandomForestClassifier - best params: ',search_rand)
-        print('DecisionTreeClassifier - best params: ',search_dec)
-        print('SVC - best params: ',search_SVC)
+        print('RandomForestClassifier - best params: ',search_rand.best_params_)
+        print('DecisionTreeClassifier - best params: ',search_dec.best_params_)
+        print('SVC - best params: ',search_SVC.best_params_)
         print('LogisticRegression - best params:',search_Log.best_params_)
         print('MLPClassifier - best params: ',search_MLP)
-        print('KNeighborsClassifier - best params: ',search_KClass)
-        print('Gradclass',Gradclass_err)
-        print('RandForclass',RandForclass_err)
-        print('DecTreeclass',DecTreeclass_err)
-        print('SVCclass',SVCclass_err)
-        print('LogReg',LogReg_err)
-        print('MLPClass',MLPClass_err)
-        print('KClass',KClass_err)
+        print('KNeighborsClassifier - best params: ',search_KClass.best_params_)
+        print('GradientBoostingClassifier accuracy',Gradclass_err)
+        print('RandomForestClassifier accuracy',RandForclass_err)
+        print('DecisionTreeClassifier accuracy',DecTreeclass_err)
+        print('SVC accuracy',SVCclass_err)
+        print('LogisticRegression  accuracy',LogReg_err)
+        print('MLPClassifier accuracy',MLPClass_err)
+        print('KNeighborsClassifier accuracy',KClass_err)
+        print('KerasClassifier accuracy', np.mean(keras_acc))
+        print('check the amount of wins and losses are in the training label data: ',self.y_train.value_counts())
         # print('PerClass',PerClass_err)
+    
+    def prob_plots(self,col_name):
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+        prob = stats.probplot(self.x_train[col_name], dist=stats.norm, plot=ax1)
+        title = f'probPlot of training data against normal distribution, feature: {col_name}'
+        ax1.set_title(title)
+        save_name = 'probplot_' + col_name + '.png'
+        plt.savefig(join(getcwd(), 'prob_plots',save_name), dpi=200)
+        
+    def feature_importances(self,model):
+        feature_imp = pd.Series(model.feature_importances_,index=self.x_test.columns).sort_values(ascending=False)
+        plt.figure(1)
+        sns.barplot(x=feature_imp,y=feature_imp.index)
+        plt.xlabel('Feature Importance')
+        plt.ylabel('Features')
+        plt.title('Feature importances for - model')
+        plt.show()
 
 
 def main():
