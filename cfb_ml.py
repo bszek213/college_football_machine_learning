@@ -108,16 +108,15 @@ class cfb:
 
         #split data into train and test
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x_no_corr,self.y, train_size=0.8)
-        
+
         #Create new scaled data - DO I REMOVE THE VARIABLES THAT ARE HIGHLY 
         # CORRELATED BEFORE I STANDARDIZE THEM OR STANDARDIZE AND THEN REMOVE
         # HIGHLY CORRELATED
         # scaler = MinMaxScaler(feature_range=(0, 1))
         # scaled_data = scaler.fit_transform(self.x_train)
-        scaler = StandardScaler()
-        scaled_data = scaler.fit(self.x_no_corr).transform(self.x_no_corr)
-        self.x_train = pd.DataFrame(scaled_data, columns = cols)
-        
+        # scaler = StandardScaler()
+        # scaled_data = scaler.fit(self.x_train).transform(self.x_train)
+        # self.x_train = pd.DataFrame(scaled_data, columns = cols)
         #Probability plots after or before scaling the data? Right now I am 
         # doing it after scaling
         # Peform a box cox transform
@@ -136,8 +135,9 @@ class cfb:
     def machine(self):
         #Keras classifier 
         model = Sequential()
-        model.add(Dense(4, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
-        model.add(Dense(4, activation='relu'))
+        model.add(Dense(32, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
+        # model.add(Dropout(0.3))
+        model.add(Dense(32, activation='relu'))
         model.add(Dense(1, activation='sigmoid'))
         model.summary() 
         #compile 
@@ -147,29 +147,36 @@ class cfb:
         #stop training when the model has not improved after 10 steps
         es = EarlyStopping(monitor='val_accuracy', 
                                    mode='max', # don't minimize the accuracy!
-                                   patience=10,
+                                   patience=20,
                                    restore_best_weights=True)
         history = model.fit(self.x_train,
                     self.y_train,
                     callbacks=[es],
                     epochs=80, # you can set this to a big number!
                     batch_size=10,
-                    validation_split=0.2,
+                    validation_data=(self.x_test, self.y_test),
                     shuffle=True,
                     verbose=1)
         keras_acc = history.history['accuracy']
 
         Gradclass = GradientBoostingClassifier()
         Grad_perm = {
-            'loss' : ['deviance', 'exponential'],
+            'loss' : ['log_loss', 'exponential'],
             'learning_rate': np.arange(0.1, .5, 0.1, dtype=float),
             'n_estimators': range(100,500,100),
             'criterion' : ['friedman_mse', 'squared_error'],
             'max_depth': np.arange(1, 5, 1, dtype=int),
-            'max_features' : ['auto', 'sqrt', 'log2']
+            'max_features' : [1, 'sqrt', 'log2']
             }
         clf = GridSearchCV(Gradclass, Grad_perm, scoring=['accuracy'],
-                           refit='accuracy',cv=5, verbose=4, n_jobs=-1)
+                            refit='accuracy', verbose=4, n_jobs=-1) #cv=5
+        # param_test2 = {'max_depth':range(5,16,2), 'min_samples_split':range(200,1001,200)}
+        # clf = GridSearchCV(estimator = GradientBoostingClassifier(learning_rate=0.1, 
+        #                                                           n_estimators=60, 
+        #                                                           max_features='sqrt', 
+        #                                                           subsample=0.8, 
+        #                                                           random_state=10), 
+        #                         param_grid = param_test2, scoring='roc_auc',n_jobs=4,iid=False, cv=5)
         search_Grad = clf.fit(self.x_train,self.y_train)
         
         RandForclass = RandomForestClassifier()
@@ -177,10 +184,10 @@ class cfb:
             'criterion' : ["gini", "entropy"],
             'n_estimators': range(100,500,100),
             'max_depth': np.arange(1, 5, 1, dtype=int),
-            'max_features' : ['auto', 'sqrt', 'log2']
+            'max_features' : [1, 'sqrt', 'log2']
             }
         clf_rand = GridSearchCV(RandForclass, Rand_perm, scoring=['accuracy'],
-                           refit='accuracy',cv=5, verbose=4, n_jobs=-1)
+                           refit='accuracy',verbose=4, n_jobs=-1)
         search_rand = clf_rand.fit(self.x_train,self.y_train)
         # RandForclass.fit(self.x_train,self.y_train)
         
@@ -189,24 +196,27 @@ class cfb:
             'splitter' : ["best", "random"],
             'criterion' : ["gini", "entropy"],
             'max_depth': np.arange(1, 5, 1, dtype=int),
-            'max_features' : ['auto', 'sqrt', 'log2']
+            'max_features' : [1, 'sqrt', 'log2']
             }
         clf_dec = GridSearchCV(DecTreeclass, Dec_perm, scoring=['accuracy'],
-                           refit='accuracy',cv=5, verbose=4, n_jobs=-1)
+                           refit='accuracy',verbose=4, n_jobs=-1)
         search_dec = clf_dec.fit(self.x_train,self.y_train)
         
         # DecTreeclass.fit(self.x_train,self.y_train)
         
         SVCclass = SVC()
-        SVC_perm = {
-            'C': np.arange(1, 5, 0.5, dtype=float),
-            'kernel' : ['linear', 'poly', 'rbf', 'sigmoid'],
-            'gamma' : ['scale', 'auto'],
-            'tol': np.arange(0.001, 0.01, 0.001,dtype=float),
-            }
+        SVC_perm = {'C': [0.1,1, 10, 100],
+                      'gamma': [1,0.1,0.01,0.001],
+                      'kernel': ['rbf', 'poly', 'sigmoid']}
+        # SVC_perm = {
+        #     'C': np.arange(1, 5, 0.5, dtype=float),
+        #     'kernel' : ['linear', 'poly', 'rbf', 'sigmoid'],
+        #     'gamma' : ['scale', 'auto'],
+        #     'tol': np.arange(0.001, 0.01, 0.001,dtype=float),
+        #     }
         clf_SVC = GridSearchCV(SVCclass, SVC_perm, scoring=['accuracy'],
-                           refit='accuracy',cv=5, verbose=4, n_jobs=-1)
-        search_SVC = clf_SVC.fit(self.x_train,self.y_train)
+                           refit='accuracy', verbose=4, n_jobs=-1)
+        search_SVC = clf_SVC.fit(self.x_train,self.y_train) #THERE MAY BE AN ISSUE OF PARALLELIZATION WITH SVC, SET n_jobs=1
         # SVCclass.fit(self.x_train,self.y_train)
         
         LogReg = LogisticRegression()
@@ -217,7 +227,7 @@ class cfb:
             'solver': ['lbfgs', 'liblinear', 'sag', 'saga']
             }
         clf_Log = GridSearchCV(LogReg, log_reg_perm, scoring=['accuracy'],
-                           refit='accuracy',cv=5, verbose=4, n_jobs=-1)
+                           refit='accuracy', verbose=4, n_jobs=-1)
         search_Log = clf_Log.fit(self.x_train,self.y_train)
         
         MLPClass = MLPClassifier()
@@ -225,11 +235,11 @@ class cfb:
             'solver' : ['lbfgs', 'sgd', 'adam'],
             'learning_rate' : ['constant', 'invscaling', 'adaptive'],
             'learning_rate_init' : np.arange(0.001, 0.005, 0.001, dtype=float),
-            'max_iter': range(100,1000,100),
-            'tol': np.arange(0.001, 0.005, 0.001, dtype=float)
+            'max_iter': range(100,1000,200),
+            # 'tol': np.arange(0.001, 0.005, 0.001, dtype=float)
             }
         clf_MLP = GridSearchCV(MLPClass, MLP_perm, scoring=['accuracy'],
-                           refit='accuracy',cv=5, verbose=4, n_jobs=-1)
+                           refit='accuracy', verbose=4, n_jobs=-1)
         search_MLP= clf_MLP.fit(self.x_train,self.y_train)
         # MLPClass.fit(self.x_train,self.y_train)
         
@@ -241,7 +251,7 @@ class cfb:
             'p' : [1,2]
             }
         clf_KClass = GridSearchCV(KClass, KClass_perm, scoring=['accuracy'],
-                           refit='accuracy',cv=5, verbose=4, n_jobs=-1)
+                           refit='accuracy', verbose=4, n_jobs=-1)
         search_KClass= clf_KClass.fit(self.x_train,self.y_train)
         # KClass.fit(self.x_train,self.y_train)
         
