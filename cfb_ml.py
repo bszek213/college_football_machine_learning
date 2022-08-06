@@ -14,7 +14,7 @@ import seaborn as sns
 from sklearn.ensemble import GradientBoostingClassifier,RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 # from sklearn.svm import SVC
-from sklearn.ensemble import from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import AdaBoostClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 # from sklearn.linear_model import Perceptron
@@ -136,9 +136,9 @@ class cfb:
     def machine(self):
         #Keras classifier 
         model = Sequential()
-        model.add(Dense(32, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
+        model.add(Dense(8, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
         # model.add(Dropout(0.3))
-        model.add(Dense(32, activation='relu'))
+        model.add(Dense(8, activation='relu'))
         model.add(Dense(1, activation='sigmoid'))
         model.summary() 
         #compile 
@@ -223,7 +223,7 @@ class cfb:
         
         ada_class = AdaBoostClassifier()
         ada_perm = {'n_estimators': range(50,200,50),
-                      'learning_rate': np.range(,5,2.5,.5,dtype=float),
+                      'learning_rate': np.range(.5,2.5,.5,dtype=float),
                       'algorithm': ['SAMME', 'SAMME.R']}
         clf_ada = GridSearchCV(ada_class, ada_perm, scoring=['accuracy'],
                             refit='accuracy', verbose=4, n_jobs=-1)
