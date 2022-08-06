@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.ensemble import GradientBoostingClassifier,RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.svm import SVC
+# from sklearn.svm import SVC
+from sklearn.ensemble import from sklearn.ensemble import AdaBoostClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 # from sklearn.linear_model import Perceptron
@@ -204,21 +205,29 @@ class cfb:
         
         # DecTreeclass.fit(self.x_train,self.y_train)
         
-        SVCclass = SVC()
-        SVC_perm = {'C': [0.1,1, 10, 100],
-                      'gamma': [1,0.1,0.01,0.001],
-                      'kernel': ['rbf', 'poly', 'sigmoid']}
         # SVC_perm = {
         #     'C': np.arange(1, 5, 0.5, dtype=float),
         #     'kernel' : ['linear', 'poly', 'rbf', 'sigmoid'],
         #     'gamma' : ['scale', 'auto'],
         #     'tol': np.arange(0.001, 0.01, 0.001,dtype=float),
         #     }
-        clf_SVC = GridSearchCV(SVCclass, SVC_perm, scoring=['accuracy'],
-                           refit='accuracy', verbose=4, n_jobs=-1)
-        search_SVC = clf_SVC.fit(self.x_train,self.y_train) #THERE MAY BE AN ISSUE OF PARALLELIZATION WITH SVC, SET n_jobs=1
         # SVCclass.fit(self.x_train,self.y_train)
+
+        # SVCclass = SVC()
+        # SVC_perm = {'C': [0.1,1, 10, 100],
+        #               'gamma': [1,0.1,0.01,0.001],
+        #               'kernel': ['rbf', 'poly', 'sigmoid']}
+        # clf_SVC = GridSearchCV(SVCclass, SVC_perm, scoring=['accuracy'],
+        #                    refit='accuracy', verbose=4, n_jobs=1)
+        # search_SVC = clf_SVC.fit(self.x_train,self.y_train) #This model for some reason freezes here on SVC
         
+        ada_class = AdaBoostClassifier()
+        ada_perm = {'n_estimators': range(50,200,50),
+                      'learning_rate': np.range(,5,2.5,.5,dtype=float),
+                      'algorithm': ['SAMME', 'SAMME.R']}
+        clf_ada = GridSearchCV(ada_class, ada_perm, scoring=['accuracy'],
+                            refit='accuracy', verbose=4, n_jobs=-1)
+        search_ada = clf_ada.fit(self.x_train,self.y_train)
         LogReg = LogisticRegression()
         log_reg_perm = {
             'penalty': ['l2'],
@@ -260,7 +269,8 @@ class cfb:
         Gradclass_err = accuracy_score(self.y_test, search_Grad.predict(self.x_test))
         RandForclass_err = accuracy_score(self.y_test, search_rand.predict(self.x_test))
         DecTreeclass_err = accuracy_score(self.y_test, search_dec.predict(self.x_test))
-        SVCclass_err = accuracy_score(self.y_test, search_SVC.predict(self.x_test))
+        # SVCclass_err = accuracy_score(self.y_test, search_SVC.predict(self.x_test))
+        adaclass_err = accuracy_score(self.y_test, search_ada.predict(self.x_test))
         LogReg_err = accuracy_score(self.y_test, search_Log.predict(self.x_test))
         MLPClass_err = accuracy_score(self.y_test, search_MLP.predict(self.x_test))
         KClass_err = accuracy_score(self.y_test, search_KClass.predict(self.x_test))
@@ -270,14 +280,16 @@ class cfb:
         print('GradientBoostingClassifier - best params: ',search_Grad.best_params_)
         print('RandomForestClassifier - best params: ',search_rand.best_params_)
         print('DecisionTreeClassifier - best params: ',search_dec.best_params_)
-        print('SVC - best params: ',search_SVC.best_params_)
+        # print('SVC - best params: ',search_SVC.best_params_)
+        print('AdaClassifier - best params: ',search_ada.best_params_)
         print('LogisticRegression - best params:',search_Log.best_params_)
         print('MLPClassifier - best params: ',search_MLP)
         print('KNeighborsClassifier - best params: ',search_KClass.best_params_)
         print('GradientBoostingClassifier accuracy',Gradclass_err)
         print('RandomForestClassifier accuracy',RandForclass_err)
         print('DecisionTreeClassifier accuracy',DecTreeclass_err)
-        print('SVC accuracy',SVCclass_err)
+        # print('SVC accuracy',SVCclass_err)
+        print('AdaClassifier accuracy',adaclass_err)
         print('LogisticRegression  accuracy',LogReg_err)
         print('MLPClassifier accuracy',MLPClass_err)
         print('KNeighborsClassifier accuracy',KClass_err)
