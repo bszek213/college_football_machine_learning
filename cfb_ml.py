@@ -94,8 +94,8 @@ class cfb:
             Q1 = np.percentile(self.x_no_corr[col_name], 25)
             Q3 = np.percentile(self.x_no_corr[col_name], 75)
             IQR = Q3 - Q1
-            upper = np.where(self.x_no_corr[col_name] >= (Q3+1.5*IQR))
-            lower = np.where(self.x_no_corr[col_name] <= (Q1-1.5*IQR)) 
+            upper = np.where(self.x_no_corr[col_name] >= (Q3+2.0*IQR)) #1.5 is the standard, use two to see if more data helps improve model performance
+            lower = np.where(self.x_no_corr[col_name] <= (Q1-2.0*IQR)) 
             self.x_no_corr.drop(upper[0], inplace = True)
             self.x_no_corr.drop(lower[0], inplace = True)
             self.y.drop(upper[0], inplace = True)
@@ -136,9 +136,11 @@ class cfb:
     def machine(self):
         #Keras classifier 
         model = Sequential()
-        model.add(Dense(8, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
+        model.add(Dense(16, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
         # model.add(Dropout(0.3))
-        model.add(Dense(8, activation='relu'))
+        model.add(Dense(16, activation='relu'))
+        model.add(Dense(16, activation='softmax'))
+        model.add(Dense(16, activation='relu'))
         model.add(Dense(1, activation='sigmoid'))
         model.summary() 
         #compile 
@@ -150,16 +152,26 @@ class cfb:
                                    mode='max', # don't minimize the accuracy!
                                    patience=20,
                                    restore_best_weights=True)
-        history = model.fit(self.x_train,
+        # history = model.fit(self.x_train,
+        #             self.y_train,
+        #             # callbacks=[es],
+        #             epochs=500, # you can set this to a big number!
+        #             batch_size=20,
+        #             # validation_data=(self.x_test, self.y_test),
+        #             shuffle=True,
+        #             verbose=1)
+        model.fit(self.x_train,
                     self.y_train,
                     # callbacks=[es],
                     epochs=500, # you can set this to a big number!
                     batch_size=20,
-                    validation_data=(self.x_test, self.y_test),
+                    # validation_data=(self.x_test, self.y_test),
                     shuffle=True,
                     verbose=1)
-        keras_acc = history.history['accuracy']
-
+        # keras_acc = history.history['accuracy']
+        # pred_train = history.predict(self.x_test) #will need this in the future when I want to look at one team vs. another
+        scores = model.evaluate(self.x_test, self.y_test, verbose=0)
+        
         Gradclass = GradientBoostingClassifier()
         Grad_perm = {
             'loss' : ['log_loss', 'exponential'],
@@ -293,7 +305,8 @@ class cfb:
         print('LogisticRegression  accuracy',LogReg_err)
         print('MLPClassifier accuracy',MLPClass_err)
         print('KNeighborsClassifier accuracy',KClass_err)
-        print('KerasClassifier accuracy', np.mean(keras_acc))
+        print("KerasClassifier: test loss, test acc:", scores)
+        # print('KerasClassifier accuracy', np.mean(keras_acc))
         print('check the amount of wins and losses are in the training label data: ',self.y_train.value_counts())
         # print('PerClass',PerClass_err)
     
