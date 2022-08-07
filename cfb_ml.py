@@ -152,9 +152,9 @@ class cfb:
                                    restore_best_weights=True)
         history = model.fit(self.x_train,
                     self.y_train,
-                    callbacks=[es],
-                    epochs=80, # you can set this to a big number!
-                    batch_size=10,
+                    # callbacks=[es],
+                    epochs=500, # you can set this to a big number!
+                    batch_size=20,
                     validation_data=(self.x_test, self.y_test),
                     shuffle=True,
                     verbose=1)
@@ -223,7 +223,7 @@ class cfb:
         
         ada_class = AdaBoostClassifier()
         ada_perm = {'n_estimators': range(50,200,50),
-                      'learning_rate': np.range(.5,2.5,.5,dtype=float),
+                      'learning_rate': np.arange(.5,2.5,.5,dtype=float),
                       'algorithm': ['SAMME', 'SAMME.R']}
         clf_ada = GridSearchCV(ada_class, ada_perm, scoring=['accuracy'],
                             refit='accuracy', verbose=4, n_jobs=-1)
@@ -283,7 +283,7 @@ class cfb:
         # print('SVC - best params: ',search_SVC.best_params_)
         print('AdaClassifier - best params: ',search_ada.best_params_)
         print('LogisticRegression - best params:',search_Log.best_params_)
-        print('MLPClassifier - best params: ',search_MLP)
+        print('MLPClassifier - best params: ',search_MLP.best_params_)
         print('KNeighborsClassifier - best params: ',search_KClass.best_params_)
         print('GradientBoostingClassifier accuracy',Gradclass_err)
         print('RandomForestClassifier accuracy',RandForclass_err)

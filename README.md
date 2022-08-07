@@ -1,6 +1,6 @@
 # College Football Game Predictions
 
-Scripts that predict the outcome of any Division I college football game. Data are from 2008 - 2021 seasons
+machine learning that predicts the outcome of any Division I college football game. Data are from 2008 - 2021 seasons
 
 ## Installation
 ```bash
@@ -14,11 +14,11 @@ python cfb_ml.py
 ```
 ### Current prediction accuracies
 ```bash
-Removed features (>=0.90 correlation):  ['penalty_yds']
-GradientBoostingClassifier - best params:  {'criterion': 'friedman_mse', 'learning_rate': 0.2, 'loss': 'log_loss', 'max_depth': 2, 'max_features': 'log2', 'n_estimators': 400}
-RandomForestClassifier - best params:  {'criterion': 'gini', 'max_depth': 4, 'max_features': 'log2', 'n_estimators': 200}
-DecisionTreeClassifier - best params:  {'criterion': 'gini', 'max_depth': 4, 'max_features': 'sqrt', 'splitter': 'best'}
-LogisticRegression - best params: {'C': 1.5, 'max_iter': 700, 'penalty': 'l2', 'solver': 'lbfgs'}
+GradientBoostingClassifier - best params:  {'criterion': 'squared_error', 'learning_rate': 0.4, 'loss': 'log_loss', 'max_depth': 1, 'max_features': 'log2', 'n_estimators': 400}
+RandomForestClassifier - best params:  {'criterion': 'gini', 'max_depth': 4, 'max_features': 'sqrt', 'n_estimators': 100}
+DecisionTreeClassifier - best params:  {'criterion': 'entropy', 'max_depth': 4, 'max_features': 'log2', 'splitter': 'best'}
+AdaClassifier - best params:  {'algorithm': 'SAMME', 'learning_rate': 1.5, 'n_estimators': 150}
+LogisticRegression - best params: {'C': 1.5, 'max_iter': 900, 'penalty': 'l2', 'solver': 'lbfgs'}
 MLPClassifier - best params:  GridSearchCV(estimator=MLPClassifier(), n_jobs=-1,
              param_grid={'learning_rate': ['constant', 'invscaling',
                                            'adaptive'],
@@ -26,14 +26,20 @@ MLPClassifier - best params:  GridSearchCV(estimator=MLPClassifier(), n_jobs=-1,
                          'max_iter': range(100, 1000, 200),
                          'solver': ['lbfgs', 'sgd', 'adam']},
              refit='accuracy', scoring=['accuracy'], verbose=4)
-KNeighborsClassifier - best params:  {'algorithm': 'kd_tree', 'n_neighbors': 100, 'p': 1, 'weights': 'distance'}
-GradientBoostingClassifier accuracy 0.789210432297249
-RandomForestClassifier accuracy 0.7642015005359056
-DecisionTreeClassifier accuracy 0.7266881028938906
-LogisticRegression  accuracy 0.797427652733119
-MLPClassifier accuracy 0.7995712754555199
-KNeighborsClassifier accuracy 0.7252590210789568
-KerasClassifier accuracy 0.7756058268430757
+
+KNeighborsClassifier - best params:  {'algorithm': 'ball_tree', 'n_neighbors': 100, 'p': 1, 'weights': 'distance'}
+GradientBoostingClassifier accuracy 0.788495891389782
+RandomForestClassifier accuracy 0.7631296891747053
+DecisionTreeClassifier accuracy 0.7281171847088246
+AdaClassifier accuracy 0.7906395141121829
+LogisticRegression  accuracy 0.7938549481957842
+MLPClassifier accuracy 0.7981421936405859
+KNeighborsClassifier accuracy 0.7220435869953555
+KerasClassifier accuracy 0.7827577253182729
+
+check the amount of wins and losses are in the training label data:
+wins    5884
+losses    5312
 
 ```
 ### Correlation Matrix
