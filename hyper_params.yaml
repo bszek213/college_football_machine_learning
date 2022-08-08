@@ -1,0 +1,7 @@
+'GradientBoostingClassifier': {'criterion': 'friedman_mse', 'learning_rate': 0.30000000000000004, 'loss': 'log_loss', 'max_depth': 2, 'max_features': 'log2', 'n_estimators': 300}
+'RandomForestClassifier': {'criterion': 'gini', 'max_depth': 4, 'max_features': 'log2', 'n_estimators': 300}
+'DecisionTreeClassifier':  {'criterion': 'gini', 'max_depth': 4, 'max_features': 'sqrt', 'splitter': 'best'}
+'AdaClassifier':  {'algorithm': 'SAMME.R', 'learning_rate': 1.0, 'n_estimators': 150}
+'LogisticRegression': {'C': 1.5, 'max_iter': 800, 'penalty': 'l2', 'solver': 'lbfgs'}
+'MLPClassifier':  {'learning_rate': 'invscaling', 'learning_rate_init': 0.004, 'max_iter': 700, 'solver': 'lbfgs'}
+'KNeighborsClassifier':  {'algorithm': 'auto', 'n_neighbors': 100, 'p': 1, 'weights': 'distance'}

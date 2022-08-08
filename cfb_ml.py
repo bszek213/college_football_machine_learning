@@ -33,6 +33,11 @@ from keras.utils import np_utils
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.callbacks import EarlyStopping
+import yaml
+#TODO: 1. Add PCA to reduce unnecessary features
+#      2. plot of the accuracy over epochs
+#      3. Try different optimizers, activations 
+
 class cfb:
     def __init__(self):
         print('initialize class cfb')
@@ -43,6 +48,15 @@ class cfb:
         parser.add_argument("-t2", "--team2", help = "team 2 input")
         parser.add_argument("-g", "--games", help = "number of games for test data")
         self.args = parser.parse_args()
+    def read_hyper_params(self):
+        final_dir = join(getcwd(), 'hyper_params.yaml')
+        isExists = exists(final_dir)
+        if isExists == True:
+            with open(final_dir) as file:
+                self.hyper_param_dict = yaml.load(file, Loader=yaml.FullLoader)
+        #dict_keys(['GradientBoostingClassifier', 'RandomForestClassifier', 'DecisionTreeClassifier',
+        #'AdaClassifier', 'LogisticRegression', 'MLPClassifier', 'KNeighborsClassifier'])
+
     def get_teams(self):
         final_dir = join(getcwd(), 'all_data.csv')
         isExists = exists(final_dir)
@@ -134,13 +148,109 @@ class cfb:
         plt.close()
 
     def machine(self):
+        #load in the hyperparams from file if the file exists
+        final_dir = join(getcwd(), 'hyper_params.yaml')
+        isExists = exists(final_dir)
+        if isExists == True:
+            Gradclass = GradientBoostingClassifier(**self.hyper_param_dict['GradientBoostingClassifier']).fit(self.x_train,self.y_train)
+            RandForclass = RandomForestClassifier(**self.hyper_param_dict['RandomForestClassifier']).fit(self.x_train,self.y_train)
+            ada_class = AdaBoostClassifier(**self.hyper_param_dict['AdaClassifier']).fit(self.x_train,self.y_train)
+            DecTreeclass = DecisionTreeClassifier(**self.hyper_param_dict['DecisionTreeClassifier']).fit(self.x_train,self.y_train)
+            LogReg = LogisticRegression(**self.hyper_param_dict['LogisticRegression']).fit(self.x_train,self.y_train)
+            KClass = KNeighborsClassifier(**self.hyper_param_dict['KNeighborsClassifier']).fit(self.x_train,self.y_train)
+            MLPClass = MLPClassifier(**self.hyper_param_dict['MLPClassifier']).fit(self.x_train,self.y_train)
+        else:
+            Gradclass = GradientBoostingClassifier()
+            Grad_perm = {
+                'loss' : ['log_loss', 'exponential'],
+                'learning_rate': np.arange(0.1, .5, 0.1, dtype=float),
+                'n_estimators': range(100,500,100),
+                'criterion' : ['friedman_mse', 'squared_error'],
+                'max_depth': np.arange(1, 5, 1, dtype=int),
+                'max_features' : [1, 'sqrt', 'log2']
+                }
+            clf = GridSearchCV(Gradclass, Grad_perm, scoring=['accuracy'],
+                                refit='accuracy', verbose=4, n_jobs=-1) #cv=5
+            # param_test2 = {'max_depth':range(5,16,2), 'min_samples_split':range(200,1001,200)}
+            # clf = GridSearchCV(estimator = GradientBoostingClassifier(learning_rate=0.1, 
+            #                                                           n_estimators=60, 
+            #                                                           max_features='sqrt', 
+            #                                                           subsample=0.8, 
+            #                                                           random_state=10), 
+            #                         param_grid = param_test2, scoring='roc_auc',n_jobs=4,iid=False, cv=5)
+            search_Grad = clf.fit(self.x_train,self.y_train)
+            
+            RandForclass = RandomForestClassifier()
+            Rand_perm = {
+                'criterion' : ["gini", "entropy"],
+                'n_estimators': range(100,500,100),
+                'max_depth': np.arange(1, 5, 1, dtype=int),
+                'max_features' : [1, 'sqrt', 'log2']
+                }
+            clf_rand = GridSearchCV(RandForclass, Rand_perm, scoring=['accuracy'],
+                               refit='accuracy',verbose=4, n_jobs=-1)
+            search_rand = clf_rand.fit(self.x_train,self.y_train)
+            # RandForclass.fit(self.x_train,self.y_train)
+            
+            DecTreeclass = DecisionTreeClassifier()
+            Dec_perm = {
+                'splitter' : ["best", "random"],
+                'criterion' : ["gini", "entropy"],
+                'max_depth': np.arange(1, 5, 1, dtype=int),
+                'max_features' : [1, 'sqrt', 'log2']
+                }
+            clf_dec = GridSearchCV(DecTreeclass, Dec_perm, scoring=['accuracy'],
+                               refit='accuracy',verbose=4, n_jobs=-1)
+            search_dec = clf_dec.fit(self.x_train,self.y_train)
+
+            ada_class = AdaBoostClassifier()
+            ada_perm = {'n_estimators': range(50,200,50),
+                          'learning_rate': np.arange(.5,2.5,.5,dtype=float),
+                          'algorithm': ['SAMME', 'SAMME.R']}
+            clf_ada = GridSearchCV(ada_class, ada_perm, scoring=['accuracy'],
+                                refit='accuracy', verbose=4, n_jobs=-1)
+            search_ada = clf_ada.fit(self.x_train,self.y_train)
+            LogReg = LogisticRegression()
+            log_reg_perm = {
+                'penalty': ['l2'],
+                'C': np.arange(1, 5, 0.5, dtype=float),
+                'max_iter': range(100,1000,100),
+                'solver': ['lbfgs', 'liblinear', 'sag', 'saga']
+                }
+            clf_Log = GridSearchCV(LogReg, log_reg_perm, scoring=['accuracy'],
+                               refit='accuracy', verbose=4, n_jobs=-1)
+            search_Log = clf_Log.fit(self.x_train,self.y_train)
+            
+            MLPClass = MLPClassifier()
+            MLP_perm = {
+                'solver' : ['lbfgs', 'sgd', 'adam'],
+                'learning_rate' : ['constant', 'invscaling', 'adaptive'],
+                'learning_rate_init' : np.arange(0.001, 0.005, 0.001, dtype=float),
+                'max_iter': range(100,1000,200),
+                # 'tol': np.arange(0.001, 0.005, 0.001, dtype=float)
+                }
+            clf_MLP = GridSearchCV(MLPClass, MLP_perm, scoring=['accuracy'],
+                               refit='accuracy', verbose=4, n_jobs=-1)
+            search_MLP= clf_MLP.fit(self.x_train,self.y_train)
+            # MLPClass.fit(self.x_train,self.y_train)
+            
+            KClass = KNeighborsClassifier()
+            KClass_perm = {
+                'n_neighbors' : range(100,1000,100),
+                'weights' : ['uniform', 'distance'],
+                'algorithm' : ['auto', 'ball_tree', 'kd_tree', 'brute'],
+                'p' : [1,2]
+                }
+            clf_KClass = GridSearchCV(KClass, KClass_perm, scoring=['accuracy'],
+                               refit='accuracy', verbose=4, n_jobs=-1)
+            search_KClass= clf_KClass.fit(self.x_train,self.y_train)
         #Keras classifier 
         model = Sequential()
-        model.add(Dense(16, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
+        model.add(Dense(32, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
         # model.add(Dropout(0.3))
-        model.add(Dense(16, activation='relu'))
+        model.add(Dense(32, activation='relu'))
         model.add(Dense(16, activation='softmax'))
-        model.add(Dense(16, activation='relu'))
+        model.add(Dense(8, activation='relu'))
         model.add(Dense(1, activation='sigmoid'))
         model.summary() 
         #compile 
@@ -160,71 +270,29 @@ class cfb:
         #             # validation_data=(self.x_test, self.y_test),
         #             shuffle=True,
         #             verbose=1)
-        model.fit(self.x_train,
+        history = model.fit(self.x_train,
                     self.y_train,
                     # callbacks=[es],
-                    epochs=500, # you can set this to a big number!
-                    batch_size=20,
+                    epochs=750, # you can set this to a big number!
+                    batch_size=50,
+                    validation_split=0.25,           
                     # validation_data=(self.x_test, self.y_test),
                     shuffle=True,
                     verbose=1)
         # keras_acc = history.history['accuracy']
         # pred_train = history.predict(self.x_test) #will need this in the future when I want to look at one team vs. another
         scores = model.evaluate(self.x_test, self.y_test, verbose=0)
-        
-        Gradclass = GradientBoostingClassifier()
-        Grad_perm = {
-            'loss' : ['log_loss', 'exponential'],
-            'learning_rate': np.arange(0.1, .5, 0.1, dtype=float),
-            'n_estimators': range(100,500,100),
-            'criterion' : ['friedman_mse', 'squared_error'],
-            'max_depth': np.arange(1, 5, 1, dtype=int),
-            'max_features' : [1, 'sqrt', 'log2']
-            }
-        clf = GridSearchCV(Gradclass, Grad_perm, scoring=['accuracy'],
-                            refit='accuracy', verbose=4, n_jobs=-1) #cv=5
-        # param_test2 = {'max_depth':range(5,16,2), 'min_samples_split':range(200,1001,200)}
-        # clf = GridSearchCV(estimator = GradientBoostingClassifier(learning_rate=0.1, 
-        #                                                           n_estimators=60, 
-        #                                                           max_features='sqrt', 
-        #                                                           subsample=0.8, 
-        #                                                           random_state=10), 
-        #                         param_grid = param_test2, scoring='roc_auc',n_jobs=4,iid=False, cv=5)
-        search_Grad = clf.fit(self.x_train,self.y_train)
-        
-        RandForclass = RandomForestClassifier()
-        Rand_perm = {
-            'criterion' : ["gini", "entropy"],
-            'n_estimators': range(100,500,100),
-            'max_depth': np.arange(1, 5, 1, dtype=int),
-            'max_features' : [1, 'sqrt', 'log2']
-            }
-        clf_rand = GridSearchCV(RandForclass, Rand_perm, scoring=['accuracy'],
-                           refit='accuracy',verbose=4, n_jobs=-1)
-        search_rand = clf_rand.fit(self.x_train,self.y_train)
-        # RandForclass.fit(self.x_train,self.y_train)
-        
-        DecTreeclass = DecisionTreeClassifier()
-        Dec_perm = {
-            'splitter' : ["best", "random"],
-            'criterion' : ["gini", "entropy"],
-            'max_depth': np.arange(1, 5, 1, dtype=int),
-            'max_features' : [1, 'sqrt', 'log2']
-            }
-        clf_dec = GridSearchCV(DecTreeclass, Dec_perm, scoring=['accuracy'],
-                           refit='accuracy',verbose=4, n_jobs=-1)
-        search_dec = clf_dec.fit(self.x_train,self.y_train)
-        
-        # DecTreeclass.fit(self.x_train,self.y_train)
-        
-        # SVC_perm = {
-        #     'C': np.arange(1, 5, 0.5, dtype=float),
-        #     'kernel' : ['linear', 'poly', 'rbf', 'sigmoid'],
-        #     'gamma' : ['scale', 'auto'],
-        #     'tol': np.arange(0.001, 0.01, 0.001,dtype=float),
-        #     }
-        # SVCclass.fit(self.x_train,self.y_train)
-
+        plt.figure()
+        plt.plot(history.history['accuracy'])
+        plt.plot(history.history['val_accuracy'])
+        plt.ylim(0, 1)
+        plt.title('Keras Classifier Accuracy')
+        plt.xlabel('Epochs')
+        plt.ylabel('Accuracy')
+        plt.legend(['train','test'])
+        save_name = 'keras_model_acc' + '.png'
+        plt.savefig(join(getcwd(),save_name), dpi=200)
+        plt.close()
         # SVCclass = SVC()
         # SVC_perm = {'C': [0.1,1, 10, 100],
         #               'gamma': [1,0.1,0.01,0.001],
@@ -232,83 +300,45 @@ class cfb:
         # clf_SVC = GridSearchCV(SVCclass, SVC_perm, scoring=['accuracy'],
         #                    refit='accuracy', verbose=4, n_jobs=1)
         # search_SVC = clf_SVC.fit(self.x_train,self.y_train) #This model for some reason freezes here on SVC
-        
-        ada_class = AdaBoostClassifier()
-        ada_perm = {'n_estimators': range(50,200,50),
-                      'learning_rate': np.arange(.5,2.5,.5,dtype=float),
-                      'algorithm': ['SAMME', 'SAMME.R']}
-        clf_ada = GridSearchCV(ada_class, ada_perm, scoring=['accuracy'],
-                            refit='accuracy', verbose=4, n_jobs=-1)
-        search_ada = clf_ada.fit(self.x_train,self.y_train)
-        LogReg = LogisticRegression()
-        log_reg_perm = {
-            'penalty': ['l2'],
-            'C': np.arange(1, 5, 0.5, dtype=float),
-            'max_iter': range(100,1000,100),
-            'solver': ['lbfgs', 'liblinear', 'sag', 'saga']
-            }
-        clf_Log = GridSearchCV(LogReg, log_reg_perm, scoring=['accuracy'],
-                           refit='accuracy', verbose=4, n_jobs=-1)
-        search_Log = clf_Log.fit(self.x_train,self.y_train)
-        
-        MLPClass = MLPClassifier()
-        MLP_perm = {
-            'solver' : ['lbfgs', 'sgd', 'adam'],
-            'learning_rate' : ['constant', 'invscaling', 'adaptive'],
-            'learning_rate_init' : np.arange(0.001, 0.005, 0.001, dtype=float),
-            'max_iter': range(100,1000,200),
-            # 'tol': np.arange(0.001, 0.005, 0.001, dtype=float)
-            }
-        clf_MLP = GridSearchCV(MLPClass, MLP_perm, scoring=['accuracy'],
-                           refit='accuracy', verbose=4, n_jobs=-1)
-        search_MLP= clf_MLP.fit(self.x_train,self.y_train)
-        # MLPClass.fit(self.x_train,self.y_train)
-        
-        KClass = KNeighborsClassifier()
-        KClass_perm = {
-            'n_neighbors' : range(100,1000,100),
-            'weights' : ['uniform', 'distance'],
-            'algorithm' : ['auto', 'ball_tree', 'kd_tree', 'brute'],
-            'p' : [1,2]
-            }
-        clf_KClass = GridSearchCV(KClass, KClass_perm, scoring=['accuracy'],
-                           refit='accuracy', verbose=4, n_jobs=-1)
-        search_KClass= clf_KClass.fit(self.x_train,self.y_train)
-        # KClass.fit(self.x_train,self.y_train)
-        
-        # PerClass = Perceptron() #Terrible model for these data
-        # PerClass.fit(self.x_train,self.y_train)
-        Gradclass_err = accuracy_score(self.y_test, search_Grad.predict(self.x_test))
-        RandForclass_err = accuracy_score(self.y_test, search_rand.predict(self.x_test))
-        DecTreeclass_err = accuracy_score(self.y_test, search_dec.predict(self.x_test))
-        # SVCclass_err = accuracy_score(self.y_test, search_SVC.predict(self.x_test))
-        adaclass_err = accuracy_score(self.y_test, search_ada.predict(self.x_test))
-        LogReg_err = accuracy_score(self.y_test, search_Log.predict(self.x_test))
-        MLPClass_err = accuracy_score(self.y_test, search_MLP.predict(self.x_test))
-        KClass_err = accuracy_score(self.y_test, search_KClass.predict(self.x_test))
-        # PerClass_err = accuracy_score(self.y_test, PerClass.predict(self.x_test))
 
+        # PerClass_err = accuracy_score(self.y_test, PerClass.predict(self.x_test))
         print('Removed features (>=0.90 correlation): ', self.drop_cols)
-        print('GradientBoostingClassifier - best params: ',search_Grad.best_params_)
-        print('RandomForestClassifier - best params: ',search_rand.best_params_)
-        print('DecisionTreeClassifier - best params: ',search_dec.best_params_)
-        # print('SVC - best params: ',search_SVC.best_params_)
-        print('AdaClassifier - best params: ',search_ada.best_params_)
-        print('LogisticRegression - best params:',search_Log.best_params_)
-        print('MLPClassifier - best params: ',search_MLP.best_params_)
-        print('KNeighborsClassifier - best params: ',search_KClass.best_params_)
-        print('GradientBoostingClassifier accuracy',Gradclass_err)
-        print('RandomForestClassifier accuracy',RandForclass_err)
-        print('DecisionTreeClassifier accuracy',DecTreeclass_err)
-        # print('SVC accuracy',SVCclass_err)
-        print('AdaClassifier accuracy',adaclass_err)
-        print('LogisticRegression  accuracy',LogReg_err)
-        print('MLPClassifier accuracy',MLPClass_err)
-        print('KNeighborsClassifier accuracy',KClass_err)
-        print("KerasClassifier: test loss, test acc:", scores)
-        # print('KerasClassifier accuracy', np.mean(keras_acc))
-        print('check the amount of wins and losses are in the training label data: ',self.y_train.value_counts())
-        # print('PerClass',PerClass_err)
+        if isExists == False:
+            print('GradientBoostingClassifier - best params: ',search_Grad.best_params_)
+            print('RandomForestClassifier - best params: ',search_rand.best_params_)
+            print('DecisionTreeClassifier - best params: ',search_dec.best_params_)
+            # print('SVC - best params: ',search_SVC.best_params_)
+            print('AdaClassifier - best params: ',search_ada.best_params_)
+            print('LogisticRegression - best params:',search_Log.best_params_)
+            print('MLPClassifier - best params: ',search_MLP.best_params_)
+            print('KNeighborsClassifier - best params: ',search_KClass.best_params_)
+            Gradclass_err = accuracy_score(self.y_test, search_Grad.predict(self.x_test))
+            RandForclass_err = accuracy_score(self.y_test, search_rand.predict(self.x_test))
+            DecTreeclass_err = accuracy_score(self.y_test, search_dec.predict(self.x_test))
+            # SVCclass_err = accuracy_score(self.y_test, search_SVC.predict(self.x_test))
+            adaclass_err = accuracy_score(self.y_test, search_ada.predict(self.x_test))
+            LogReg_err = accuracy_score(self.y_test, search_Log.predict(self.x_test))
+            MLPClass_err = accuracy_score(self.y_test, search_MLP.predict(self.x_test))
+            KClass_err = accuracy_score(self.y_test, search_KClass.predict(self.x_test))
+        else:
+            Gradclass_err = accuracy_score(self.y_test, Gradclass.predict(self.x_test))
+            RandForclass_err = accuracy_score(self.y_test, RandForclass.predict(self.x_test))
+            DecTreeclass_err = accuracy_score(self.y_test, DecTreeclass.predict(self.x_test))
+            adaclass_err = accuracy_score(self.y_test, ada_class.predict(self.x_test))
+            LogReg_err = accuracy_score(self.y_test, LogReg.predict(self.x_test))
+            MLPClass_err = accuracy_score(self.y_test, MLPClass.predict(self.x_test))
+            KClass_err = accuracy_score(self.y_test, KClass.predict(self.x_test))
+            print('GradientBoostingClassifier accuracy',Gradclass_err)
+            print('RandomForestClassifier accuracy',RandForclass_err)
+            print('DecisionTreeClassifier accuracy',DecTreeclass_err)
+            # print('SVC accuracy',SVCclass_err)
+            print('AdaClassifier accuracy',adaclass_err)
+            print('LogisticRegression  accuracy',LogReg_err)
+            print('MLPClassifier accuracy',MLPClass_err)
+            print('KNeighborsClassifier accuracy',KClass_err)
+            print("KerasClassifier: test loss, test acc:", scores)
+            # print('KerasClassifier accuracy', np.mean(keras_acc))
+            print('check the amount of wins and losses are in the training label data: ',self.y_train.value_counts())
     
     def prob_plots(self,col_name):
         fig = plt.figure()
@@ -318,6 +348,7 @@ class cfb:
         ax1.set_title(title)
         save_name = 'probplot_' + col_name + '.png'
         plt.savefig(join(getcwd(), 'prob_plots',save_name), dpi=200)
+        # plt.close()
         
     def feature_importances(self,model):
         feature_imp = pd.Series(model.feature_importances_,index=self.x_test.columns).sort_values(ascending=False)
@@ -333,6 +364,7 @@ def main():
     start_time = time.time()
     cfb_class = cfb()
     cfb_class.input_arg()
+    cfb_class.read_hyper_params()
     cfb_class.get_teams()
     cfb_class.split()
     cfb_class.machine()

@@ -25,14 +25,14 @@ LogisticRegression - best params: {'C': 1.5, 'max_iter': 800, 'penalty': 'l2', '
 MLPClassifier - best params:  {'learning_rate': 'invscaling', 'learning_rate_init': 0.004, 'max_iter': 700, 'solver': 'lbfgs'}
 KNeighborsClassifier - best params:  {'algorithm': 'auto', 'n_neighbors': 100, 'p': 1, 'weights': 'distance'}
 
-GradientBoostingClassifier accuracy 0.7877204441541477
-RandomForestClassifier accuracy 0.7619203135205748
-DecisionTreeClassifier accuracy 0.732527759634226
-AdaClassifier accuracy 0.7782495101241019
-LogisticRegression  accuracy 0.782495101241019
-MLPClassifier accuracy 0.7841280209013717
-KNeighborsClassifier accuracy 0.7344872632266493
-KerasClassifier: test loss, test acc: [0.45782729983329773, 0.7844545841217041]
+GradientBoostingClassifier accuracy 0.8063357282821685
+RandomForestClassifier accuracy 0.7629000653167864
+DecisionTreeClassifier accuracy 0.7390594382756368
+AdaClassifier accuracy 0.798824297844546
+LogisticRegression  accuracy 0.8073154800783802
+MLPClassifier accuracy 0.5352710646636185
+KNeighborsClassifier accuracy 0.731874591770085
+KerasClassifier: test loss, test acc: [0.48451074957847595, 0.7962116003036499]
 
 check the amount of wins and losses are in the training label data (should be almost equal):
 1    6590
