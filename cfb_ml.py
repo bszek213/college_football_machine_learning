@@ -108,8 +108,8 @@ class cfb:
             Q1 = np.percentile(self.x_no_corr[col_name], 25)
             Q3 = np.percentile(self.x_no_corr[col_name], 75)
             IQR = Q3 - Q1
-            upper = np.where(self.x_no_corr[col_name] >= (Q3+2.0*IQR)) #1.5 is the standard, use two to see if more data helps improve model performance
-            lower = np.where(self.x_no_corr[col_name] <= (Q1-2.0*IQR)) 
+            upper = np.where(self.x_no_corr[col_name] >= (Q3+3.0*IQR)) #1.5 is the standard, use two to see if more data helps improve model performance
+            lower = np.where(self.x_no_corr[col_name] <= (Q1-3.0*IQR)) 
             self.x_no_corr.drop(upper[0], inplace = True)
             self.x_no_corr.drop(lower[0], inplace = True)
             self.y.drop(upper[0], inplace = True)
@@ -148,6 +148,9 @@ class cfb:
         plt.close()
 
     def machine(self):
+        #Drop data that poorly fit the normally distribution
+        self.x_train.drop(columns=['turnovers'], inplace=True)
+        self.x_test.drop(columns=['turnovers'], inplace=True)
         #load in the hyperparams from file if the file exists
         final_dir = join(getcwd(), 'hyper_params.yaml')
         isExists = exists(final_dir)
@@ -248,8 +251,8 @@ class cfb:
         model = Sequential()
         model.add(Dense(32, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
         # model.add(Dropout(0.3))
-        model.add(Dense(32, activation='relu'))
-        model.add(Dense(16, activation='softmax'))
+        model.add(Dense(16, activation='relu'))
+        model.add(Dense(8, activation='softmax'))
         model.add(Dense(8, activation='relu'))
         model.add(Dense(1, activation='sigmoid'))
         model.summary() 
@@ -273,7 +276,7 @@ class cfb:
         history = model.fit(self.x_train,
                     self.y_train,
                     # callbacks=[es],
-                    epochs=750, # you can set this to a big number!
+                    epochs=1000, # you can set this to a big number!
                     batch_size=50,
                     validation_split=0.25,           
                     # validation_data=(self.x_test, self.y_test),
