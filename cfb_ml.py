@@ -149,8 +149,8 @@ class cfb:
 
     def machine(self):
         #Drop data that poorly fit the normally distribution
-        self.x_train.drop(columns=['turnovers'], inplace=True)
-        self.x_test.drop(columns=['turnovers'], inplace=True)
+        # self.x_train.drop(columns=['turnovers','first_down_penalty','fumbles_lost','pass_int'], inplace=True)
+        # self.x_test.drop(columns=['turnovers','first_down_penalty','fumbles_lost','pass_int'], inplace=True)
         #load in the hyperparams from file if the file exists
         final_dir = join(getcwd(), 'hyper_params.yaml')
         isExists = exists(final_dir)
@@ -251,13 +251,13 @@ class cfb:
         model = Sequential()
         model.add(Dense(32, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
         # model.add(Dropout(0.3))
+        model.add(Dense(32, activation='relu'))
+        model.add(Dense(32, activation='softmax'))
         model.add(Dense(16, activation='relu'))
-        model.add(Dense(8, activation='softmax'))
-        model.add(Dense(8, activation='relu'))
         model.add(Dense(1, activation='sigmoid'))
         model.summary() 
         #compile 
-        model.compile(optimizer='Adam', 
+        model.compile(optimizer='SGD', 
               loss='binary_crossentropy',
               metrics=['accuracy'])
         #stop training when the model has not improved after 10 steps
@@ -347,10 +347,11 @@ class cfb:
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
         prob = stats.probplot(self.x_train[col_name], dist=stats.norm, plot=ax1)
-        title = f'probPlot of training data against normal distribution, feature: {col_name}'
-        ax1.set_title(title)
+        title = f'probPlot of training data against normal distribution, feature: {col_name}'  
+        ax1.set_title(title,fontsize=10)
         save_name = 'probplot_' + col_name + '.png'
         plt.savefig(join(getcwd(), 'prob_plots',save_name), dpi=200)
+        plt.tight_layout()
         # plt.close()
         
     def feature_importances(self,model):
