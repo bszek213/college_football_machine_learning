@@ -61,7 +61,7 @@ class cfb:
         final_dir = join(getcwd(), 'all_data.csv')
         isExists = exists(final_dir)
         if isExists == False:
-            year_list = [2021,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010,2009,2008,2007]
+            year_list = [2021,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000]
             for year in year_list:
                 all_teams = Teams(year)
                 team_names = all_teams.dataframes.abbreviation
@@ -258,7 +258,7 @@ class cfb:
         model.summary() 
         #compile 
         model.compile(optimizer='SGD', 
-              loss='binary_crossentropy',
+              loss='kl_divergence',
               metrics=['accuracy'])
         #stop training when the model has not improved after 10 steps
         es = EarlyStopping(monitor='val_accuracy', 

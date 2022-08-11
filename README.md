@@ -33,6 +33,7 @@ LogisticRegression  accuracy 0.8090199042579995
 MLPClassifier accuracy 0.8115394305870496
 KNeighborsClassifier accuracy 0.7377173091458806
 KerasClassifier: test loss, test acc: [0.43896231055259705, 0.8022171854972839]
+#Keras hyperparams: optimizer='SGD' or 'Adam,loss='binary_crossentropy'
 
 
 check the amount of wins and losses are in the training label data (should be almost equal):
