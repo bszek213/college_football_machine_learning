@@ -26,7 +26,6 @@ from sklearn.model_selection import GridSearchCV
 from os import getcwd
 from os.path import join, exists
 from scipy import stats
-from sklearn.preprocessing import LabelEncoder
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras.utils import np_utils
 # for modeling
@@ -34,10 +33,38 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.callbacks import EarlyStopping
 import yaml
+import tensorflow as tf
 #TODO: 1. Add PCA to reduce unnecessary features
 #      2. plot of the accuracy over epochs
 #      3. Try different optimizers, activations 
-
+def keras_model(unit):
+    #Keras classifier 
+    model = Sequential()
+    model.add(Dense(units=unit,input_shape=(shape_x_train,),activation="relu"))#input shape - (features,) = input_shape=(self.x_train.shape[1],),
+    # model.add(Dropout(0.3))
+    model.add(Dense(units=unit,activation='relu'))
+    model.add(Dense(units=unit,activation='softmax'))
+    model.add(Dense(units=unit,activation='relu'))
+    model.add(Dense(1, activation='sigmoid'))
+    model.summary() 
+    #compile 
+    model.compile(optimizer='SGD', 
+          loss='binary_crossentropy', #tf.keras.losses.BinaryCrossentropy(from_logits=True)
+          metrics=['accuracy'])
+    #stop training when the model has not improved after 10 steps
+    # es = EarlyStopping(monitor='val_accuracy', 
+    #                            mode='max', # don't minimize the accuracy!
+    #                            patience=20,
+    #                            restore_best_weights=True)
+    # history = model.fit(self.x_train,
+    #             self.y_train,
+    #             # callbacks=[es],
+    #             epochs=500, # you can set this to a big number!
+    #             batch_size=20,
+    #             # validation_data=(self.x_test, self.y_test),
+    #             shuffle=True,
+    #             verbose=1)
+    return model
 class cfb:
     def __init__(self):
         print('initialize class cfb')
@@ -146,7 +173,7 @@ class cfb:
         g=sns.heatmap(corr_matrix[top_corr_features],annot=True,cmap="RdYlGn")
         plt.savefig('correlations.png')
         plt.close()
-
+        
     def machine(self):
         #Drop data that poorly fit the normally distribution
         # self.x_train.drop(columns=['turnovers','first_down_penalty','fumbles_lost','pass_int'], inplace=True)
@@ -162,6 +189,55 @@ class cfb:
             LogReg = LogisticRegression(**self.hyper_param_dict['LogisticRegression']).fit(self.x_train,self.y_train)
             KClass = KNeighborsClassifier(**self.hyper_param_dict['KNeighborsClassifier']).fit(self.x_train,self.y_train)
             MLPClass = MLPClassifier(**self.hyper_param_dict['MLPClassifier']).fit(self.x_train,self.y_train)
+            #Keras classifier 
+            model = Sequential()
+            model.add(Dense(8, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
+            # model.add(Dropout(0.3))
+            model.add(Dense(8, activation='relu'))
+            model.add(Dense(8, activation='softmax'))
+            model.add(Dense(8, activation='relu'))
+            model.add(Dense(1, activation='sigmoid'))
+            model.summary() 
+            #compile 
+            model.compile(optimizer='SGD', 
+                  loss='binary_crossentropy',
+                  metrics=['accuracy'])
+            #stop training when the model has not improved after 10 steps
+            es = EarlyStopping(monitor='val_accuracy', 
+                                       mode='max', # don't minimize the accuracy!
+                                       patience=20,
+                                       restore_best_weights=True)
+            # history = model.fit(self.x_train,
+            #             self.y_train,
+            #             # callbacks=[es],
+            #             epochs=500, # you can set this to a big number!
+            #             batch_size=20,
+            #             # validation_data=(self.x_test, self.y_test),
+            #             shuffle=True,
+            #             verbose=1)
+            history = model.fit(self.x_train,
+                        self.y_train,
+                        # callbacks=[es],
+                        epochs=1000, # you can set this to a big number!
+                        batch_size=32,
+                        validation_split=0.25,           
+                        # validation_data=(self.x_test, self.y_test),
+                        shuffle=True,
+                        verbose=1)
+            # keras_acc = history.history['accuracy']
+            # pred_train = history.predict(self.x_test) #will need this in the future when I want to look at one team vs. another
+            scores = model.evaluate(self.x_test, self.y_test, verbose=0)
+            plt.figure()
+            plt.plot(history.history['accuracy'])
+            plt.plot(history.history['val_accuracy'])
+            plt.ylim(0, 1)
+            plt.title('Keras Classifier Accuracy')
+            plt.xlabel('Epochs')
+            plt.ylabel('Accuracy')
+            plt.legend(['train','test'])
+            save_name = 'keras_model_acc' + '.png'
+            plt.savefig(join(getcwd(),save_name), dpi=200)
+            plt.close()
         else:
             Gradclass = GradientBoostingClassifier()
             Grad_perm = {
@@ -247,55 +323,16 @@ class cfb:
             clf_KClass = GridSearchCV(KClass, KClass_perm, scoring=['accuracy'],
                                refit='accuracy', verbose=4, n_jobs=-1)
             search_KClass= clf_KClass.fit(self.x_train,self.y_train)
-        #Keras classifier 
-        model = Sequential()
-        model.add(Dense(32, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
-        # model.add(Dropout(0.3))
-        model.add(Dense(32, activation='relu'))
-        model.add(Dense(32, activation='softmax'))
-        model.add(Dense(16, activation='relu'))
-        model.add(Dense(1, activation='sigmoid'))
-        model.summary() 
-        #compile 
-        model.compile(optimizer='SGD', 
-              loss='kl_divergence',
-              metrics=['accuracy'])
-        #stop training when the model has not improved after 10 steps
-        es = EarlyStopping(monitor='val_accuracy', 
-                                   mode='max', # don't minimize the accuracy!
-                                   patience=20,
-                                   restore_best_weights=True)
-        # history = model.fit(self.x_train,
-        #             self.y_train,
-        #             # callbacks=[es],
-        #             epochs=500, # you can set this to a big number!
-        #             batch_size=20,
-        #             # validation_data=(self.x_test, self.y_test),
-        #             shuffle=True,
-        #             verbose=1)
-        history = model.fit(self.x_train,
-                    self.y_train,
-                    # callbacks=[es],
-                    epochs=1000, # you can set this to a big number!
-                    batch_size=50,
-                    validation_split=0.25,           
-                    # validation_data=(self.x_test, self.y_test),
-                    shuffle=True,
-                    verbose=1)
-        # keras_acc = history.history['accuracy']
-        # pred_train = history.predict(self.x_test) #will need this in the future when I want to look at one team vs. another
-        scores = model.evaluate(self.x_test, self.y_test, verbose=0)
-        plt.figure()
-        plt.plot(history.history['accuracy'])
-        plt.plot(history.history['val_accuracy'])
-        plt.ylim(0, 1)
-        plt.title('Keras Classifier Accuracy')
-        plt.xlabel('Epochs')
-        plt.ylabel('Accuracy')
-        plt.legend(['train','test'])
-        save_name = 'keras_model_acc' + '.png'
-        plt.savefig(join(getcwd(),save_name), dpi=200)
-        plt.close()
+            #Keras tuning
+            global shape_x_train
+            shape_x_train = self.x_train.shape[1]
+            model_keras = KerasClassifier(build_fn=keras_model)
+            params_keras = {'batch_size': [100,50,32,25,20],
+                            'nb_epoch': [100,200,300,400],
+                            'unit':[4,8,12,16,32]}
+            keras_grid = GridSearchCV(estimator=model_keras, param_grid=params_keras,cv=5)
+            keras_grid.fit(self.x_train,self.y_train)
+        
         # SVCclass = SVC()
         # SVC_perm = {'C': [0.1,1, 10, 100],
         #               'gamma': [1,0.1,0.01,0.001],
@@ -323,6 +360,7 @@ class cfb:
             LogReg_err = accuracy_score(self.y_test, search_Log.predict(self.x_test))
             MLPClass_err = accuracy_score(self.y_test, search_MLP.predict(self.x_test))
             KClass_err = accuracy_score(self.y_test, search_KClass.predict(self.x_test))
+            print(f'Keras best params: {keras_grid.best_score_}, {keras_grid.best_params_}')
         else:
             Gradclass_err = accuracy_score(self.y_test, Gradclass.predict(self.x_test))
             RandForclass_err = accuracy_score(self.y_test, RandForclass.predict(self.x_test))
