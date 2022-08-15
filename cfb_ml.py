@@ -35,8 +35,8 @@ from keras.callbacks import EarlyStopping
 import yaml
 import tensorflow as tf
 import xgboost as xgb
+
 #TODO: 1. Add PCA to reduce unnecessary features
-#      2. plot of the accuracy over epochs
 #      3. Try different optimizers, activations 
 def keras_model(unit):
     #Keras classifier 
@@ -82,8 +82,6 @@ class cfb:
         if isExists == True:
             with open(final_dir) as file:
                 self.hyper_param_dict = yaml.load(file, Loader=yaml.FullLoader)
-        #dict_keys(['GradientBoostingClassifier', 'RandomForestClassifier', 'DecisionTreeClassifier',
-        #'AdaClassifier', 'LogisticRegression', 'MLPClassifier', 'KNeighborsClassifier'])
 
     def get_teams(self):
         final_dir = join(getcwd(), 'all_data.csv')
@@ -136,8 +134,8 @@ class cfb:
             Q1 = np.percentile(self.x_no_corr[col_name], 25)
             Q3 = np.percentile(self.x_no_corr[col_name], 75)
             IQR = Q3 - Q1
-            upper = np.where(self.x_no_corr[col_name] >= (Q3+3.0*IQR)) #1.5 is the standard, use two to see if more data helps improve model performance
-            lower = np.where(self.x_no_corr[col_name] <= (Q1-3.0*IQR)) 
+            upper = np.where(self.x_no_corr[col_name] >= (Q3+1.5*IQR)) #1.5 is the standard, use two to see if more data helps improve model performance
+            lower = np.where(self.x_no_corr[col_name] <= (Q1-1.5*IQR)) 
             self.x_no_corr.drop(upper[0], inplace = True)
             self.x_no_corr.drop(lower[0], inplace = True)
             self.y.drop(upper[0], inplace = True)
@@ -193,11 +191,11 @@ class cfb:
             xgb_class = xgb.XGBClassifier(**self.hyper_param_dict['XGB-boost']).fit(self.x_train,self.y_train)  
             #Keras classifier 
             model = Sequential()
-            model.add(Dense(8, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
+            model.add(Dense(12, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
             # model.add(Dropout(0.3))
-            model.add(Dense(8, activation='relu'))
-            model.add(Dense(8, activation='softmax'))
-            model.add(Dense(8, activation='relu'))
+            model.add(Dense(12, activation='relu'))
+            model.add(Dense(12, activation='softmax'))
+            model.add(Dense(12, activation='relu'))
             model.add(Dense(1, activation='sigmoid'))
             model.summary() 
             #compile 
@@ -220,7 +218,7 @@ class cfb:
             history = model.fit(self.x_train,
                         self.y_train,
                         # callbacks=[es],
-                        epochs=1000, # you can set this to a big number!
+                        epochs=200, # you can set this to a big number!
                         batch_size=32,
                         validation_split=0.25,           
                         # validation_data=(self.x_test, self.y_test),
@@ -332,7 +330,7 @@ class cfb:
             params_keras = {'batch_size': [100,50,32,25,20],
                             'nb_epoch': [100,200,300,400],
                             'unit':[4,8,12,16,32]}
-            keras_grid = GridSearchCV(estimator=model_keras, param_grid=params_keras,cv=5)
+            keras_grid = GridSearchCV(estimator=model_keras, param_grid=params_keras,cv=5,n_jobs=-1)
             keras_grid.fit(self.x_train,self.y_train)
             
             #XGB boost tuning
@@ -387,6 +385,15 @@ class cfb:
             KClass_err = accuracy_score(self.y_test, search_KClass.predict(self.x_test))
             XGB_err = accuracy_score(self.y_test, grid_search_xgb.predict(self.x_test))
             print(f'Keras best params: {keras_grid.best_score_}, {keras_grid.best_params_}')
+            print('GradientBoostingClassifier accuracy',Gradclass_err)
+            print('RandomForestClassifier accuracy',RandForclass_err)
+            print('DecisionTreeClassifier accuracy',DecTreeclass_err)
+            # print('SVC accuracy',SVCclass_err)
+            print('AdaClassifier accuracy',adaclass_err)
+            print('LogisticRegression  accuracy',LogReg_err)
+            print('MLPClassifier accuracy',MLPClass_err)
+            print('KNeighborsClassifier accuracy',KClass_err)
+            print('XGBClassifier accuracy',XGB_err)
             return 'no model'
         else:
             Gradclass_err = accuracy_score(self.y_test, Gradclass.predict(self.x_test))
@@ -453,16 +460,18 @@ class cfb:
         # plt.close()
         
     def feature_importances(self,model):
-        feature_imp = pd.Series(model.feature_importances_,index=self.x_test.columns).sort_values(ascending=False)
-        plt.close()
-        plt.figure()
-        sns.barplot(x=feature_imp,y=feature_imp.index)
-        plt.xlabel('Feature Importance')
-        plt.ylabel('Features')
-        plt.title('Feature importances for - model')
-        save_name = 'FeatureImportance' + '.png'
-        plt.tight_layout()
-        plt.savefig(join(getcwd(), save_name), dpi=300)
+        print(model)
+        if model != "no model":
+            feature_imp = pd.Series(model.feature_importances_,index=self.x_test.columns).sort_values(ascending=False)
+            plt.close()
+            plt.figure()
+            sns.barplot(x=feature_imp,y=feature_imp.index)
+            plt.xlabel('Feature Importance')
+            plt.ylabel('Features')
+            plt.title('Feature importances for - model')
+            save_name = 'FeatureImportance' + '.png'
+            plt.tight_layout()
+            plt.savefig(join(getcwd(), save_name), dpi=300)
         
 
 def main():
