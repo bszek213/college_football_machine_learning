@@ -25,14 +25,15 @@ LogisticRegression - best params: {'C': 1.5, 'max_iter': 800, 'penalty': 'l2', '
 MLPClassifier - best params:  {'learning_rate': 'invscaling', 'learning_rate_init': 0.004, 'max_iter': 700, 'solver': 'lbfgs'}
 KNeighborsClassifier - best params:  {'algorithm': 'auto', 'n_neighbors': 100, 'p': 1, 'weights': 'distance'}
 
-GradientBoostingClassifier accuracy 0.801862390067253
-RandomForestClassifier accuracy 0.7720296602862563
-DecisionTreeClassifier accuracy 0.7573719606828764
-AdaClassifier accuracy 0.8046214864631833
-LogisticRegression  accuracy 0.803759268839455
-MLPClassifier accuracy 0.8065183652353854
-KNeighborsClassifier accuracy 0.727366787377134
-KerasClassifier: test loss, test acc: [0.44502583146095276, 0.7832384705543518] 
+GradientBoostingClassifier accuracy 0.8041041558889463
+RandomForestClassifier accuracy 0.7747887566821866
+DecisionTreeClassifier accuracy 0.7068460079324022
+AdaClassifier accuracy 0.8049663735126746
+LogisticRegression  accuracy 0.8032419382652182
+MLPClassifier accuracy 0.8053112605621658
+KNeighborsClassifier accuracy 0.7306432143473013
+XGBClassifier accuracy 0.8035868253147095
+KerasClassifier: test loss, test acc: [0.41929247975349426, 0.804966390132904] 
 #Keras hyperparams: optimizer='SGD' or 'Adam,loss='binary_crossentropy'
 
 

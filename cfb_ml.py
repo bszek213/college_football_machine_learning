@@ -34,6 +34,7 @@ from keras.layers import Dense, Dropout
 from keras.callbacks import EarlyStopping
 import yaml
 import tensorflow as tf
+import xgboost as xgb
 #TODO: 1. Add PCA to reduce unnecessary features
 #      2. plot of the accuracy over epochs
 #      3. Try different optimizers, activations 
@@ -189,6 +190,7 @@ class cfb:
             LogReg = LogisticRegression(**self.hyper_param_dict['LogisticRegression']).fit(self.x_train,self.y_train)
             KClass = KNeighborsClassifier(**self.hyper_param_dict['KNeighborsClassifier']).fit(self.x_train,self.y_train)
             MLPClass = MLPClassifier(**self.hyper_param_dict['MLPClassifier']).fit(self.x_train,self.y_train)
+            xgb_class = xgb.XGBClassifier(**self.hyper_param_dict['XGB-boost']).fit(self.x_train,self.y_train)  
             #Keras classifier 
             model = Sequential()
             model.add(Dense(8, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
@@ -332,7 +334,29 @@ class cfb:
                             'unit':[4,8,12,16,32]}
             keras_grid = GridSearchCV(estimator=model_keras, param_grid=params_keras,cv=5)
             keras_grid.fit(self.x_train,self.y_train)
-        
+            
+            #XGB boost tuning
+            estimator = xgb.XGBClassifier(
+                    objective= 'binary:logistic',
+                    nthread=4,
+                    seed=42
+                    )
+            parameters_xgb = {
+                        'max_depth': range (2, 10, 1),
+                        'n_estimators': range(60, 220, 40),
+                        'learning_rate': [0.1, 0.01, 0.05]
+                        }
+            grid_search_xgb = GridSearchCV(
+                                        estimator=estimator,
+                                        param_grid=parameters_xgb,
+                                        scoring = 'accuracy',
+                                        n_jobs = -1,
+                                        cv = 5,
+                                        verbose=4
+                                        )
+    
+            grid_search_xgb.fit(self.x_train,self.y_train)
+            
         # SVCclass = SVC()
         # SVC_perm = {'C': [0.1,1, 10, 100],
         #               'gamma': [1,0.1,0.01,0.001],
@@ -352,6 +376,7 @@ class cfb:
             print('LogisticRegression - best params:',search_Log.best_params_)
             print('MLPClassifier - best params: ',search_MLP.best_params_)
             print('KNeighborsClassifier - best params: ',search_KClass.best_params_)
+            print('XGB-boost - best params: ',grid_search_xgb.best_params_)
             Gradclass_err = accuracy_score(self.y_test, search_Grad.predict(self.x_test))
             RandForclass_err = accuracy_score(self.y_test, search_rand.predict(self.x_test))
             DecTreeclass_err = accuracy_score(self.y_test, search_dec.predict(self.x_test))
@@ -360,6 +385,7 @@ class cfb:
             LogReg_err = accuracy_score(self.y_test, search_Log.predict(self.x_test))
             MLPClass_err = accuracy_score(self.y_test, search_MLP.predict(self.x_test))
             KClass_err = accuracy_score(self.y_test, search_KClass.predict(self.x_test))
+            XGB_err = accuracy_score(self.y_test, grid_search_xgb.predict(self.x_test))
             print(f'Keras best params: {keras_grid.best_score_}, {keras_grid.best_params_}')
         else:
             Gradclass_err = accuracy_score(self.y_test, Gradclass.predict(self.x_test))
@@ -369,6 +395,7 @@ class cfb:
             LogReg_err = accuracy_score(self.y_test, LogReg.predict(self.x_test))
             MLPClass_err = accuracy_score(self.y_test, MLPClass.predict(self.x_test))
             KClass_err = accuracy_score(self.y_test, KClass.predict(self.x_test))
+            xgb_class_err = accuracy_score(self.y_test, xgb_class.predict(self.x_test))
             print('GradientBoostingClassifier accuracy',Gradclass_err)
             print('RandomForestClassifier accuracy',RandForclass_err)
             print('DecisionTreeClassifier accuracy',DecTreeclass_err)
@@ -377,6 +404,7 @@ class cfb:
             print('LogisticRegression  accuracy',LogReg_err)
             print('MLPClassifier accuracy',MLPClass_err)
             print('KNeighborsClassifier accuracy',KClass_err)
+            print('XGBClassifier accuracy',xgb_class_err)
             print("KerasClassifier: test loss, test acc:", scores)
             # print('KerasClassifier accuracy', np.mean(keras_acc))
             print('check the amount of wins and losses are in the training label data: ',self.y_train.value_counts())
