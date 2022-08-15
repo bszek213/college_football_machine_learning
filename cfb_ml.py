@@ -387,6 +387,7 @@ class cfb:
             KClass_err = accuracy_score(self.y_test, search_KClass.predict(self.x_test))
             XGB_err = accuracy_score(self.y_test, grid_search_xgb.predict(self.x_test))
             print(f'Keras best params: {keras_grid.best_score_}, {keras_grid.best_params_}')
+            return 'no model'
         else:
             Gradclass_err = accuracy_score(self.y_test, Gradclass.predict(self.x_test))
             RandForclass_err = accuracy_score(self.y_test, RandForclass.predict(self.x_test))
@@ -408,6 +409,37 @@ class cfb:
             print("KerasClassifier: test loss, test acc:", scores)
             # print('KerasClassifier accuracy', np.mean(keras_acc))
             print('check the amount of wins and losses are in the training label data: ',self.y_train.value_counts())
+            #return model with the highest accuracy
+            dict_models = {'Gradient': Gradclass_err,
+                           'RandomForest': RandForclass_err,
+                           'DecisionTree': DecTreeclass_err,
+                           'Adaboost': adaclass_err,
+                           'Log': LogReg_err,
+                           'Perceptron': MLPClass_err,
+                           'Kneighbor': KClass_err,
+                           'XGB': xgb_class_err,
+                           'Keras': scores[1],
+                           }
+            model_name = max(dict_models, key=dict_models.get)
+            print(f'Model with the highest accuracy: {model_name}')
+            if model_name == 'Gradient':
+                return Gradclass
+            elif model_name == 'RandomForest':
+                return RandForclass
+            elif model_name == 'DecisionTree':
+                return DecTreeclass
+            elif model_name == 'Adaboost':
+                return ada_class
+            elif model_name == 'Log':
+                return LogReg
+            elif model_name == 'Perceptron':
+                return MLPClass
+            elif model_name == 'Kneighbor':
+                return KClass
+            elif model_name == 'XGB':
+                return xgb_class
+            elif model_name == 'Keras':
+                return model
     
     def prob_plots(self,col_name):
         fig = plt.figure()
@@ -416,19 +448,22 @@ class cfb:
         title = f'probPlot of training data against normal distribution, feature: {col_name}'  
         ax1.set_title(title,fontsize=10)
         save_name = 'probplot_' + col_name + '.png'
-        plt.savefig(join(getcwd(), 'prob_plots',save_name), dpi=200)
         plt.tight_layout()
+        plt.savefig(join(getcwd(), 'prob_plots',save_name), dpi=200)
         # plt.close()
         
     def feature_importances(self,model):
         feature_imp = pd.Series(model.feature_importances_,index=self.x_test.columns).sort_values(ascending=False)
-        plt.figure(1)
+        plt.close()
+        plt.figure()
         sns.barplot(x=feature_imp,y=feature_imp.index)
         plt.xlabel('Feature Importance')
         plt.ylabel('Features')
         plt.title('Feature importances for - model')
-        plt.show()
-
+        save_name = 'FeatureImportance' + '.png'
+        plt.tight_layout()
+        plt.savefig(join(getcwd(), save_name), dpi=300)
+        
 
 def main():
     start_time = time.time()
@@ -437,8 +472,9 @@ def main():
     cfb_class.read_hyper_params()
     cfb_class.get_teams()
     cfb_class.split()
-    cfb_class.machine()
+    model = cfb_class.machine()
+    cfb_class.feature_importances(model)
     print("--- %s seconds ---" % (time.time() - start_time))
+
 if __name__ == '__main__':
     main()
-    
