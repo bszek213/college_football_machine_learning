@@ -35,7 +35,7 @@ from keras.callbacks import EarlyStopping
 import yaml
 import tensorflow as tf
 import xgboost as xgb
-
+from sklearn.inspection import permutation_importance
 #TODO: 1. Add PCA to reduce unnecessary features
 #      3. Try different optimizers, activations 
 def keras_model(unit):
@@ -460,18 +460,32 @@ class cfb:
         # plt.close()
         
     def feature_importances(self,model):
-        print(model)
+        imps = permutation_importance(model, self.x_test, self.y_test)
         if model != "no model":
-            feature_imp = pd.Series(model.feature_importances_,index=self.x_test.columns).sort_values(ascending=False)
-            plt.close()
-            plt.figure()
-            sns.barplot(x=feature_imp,y=feature_imp.index)
-            plt.xlabel('Feature Importance')
-            plt.ylabel('Features')
-            plt.title('Feature importances for - model')
-            save_name = 'FeatureImportance' + '.png'
-            plt.tight_layout()
-            plt.savefig(join(getcwd(), save_name), dpi=300)
+            if 'MLPClassifier' or 'LogisticRegression' or 'keras' in str(model):
+                feature_imp = pd.Series(imps.importances_mean,index=self.x_test.columns).sort_values(ascending=False)
+                plt.close()
+                plt.figure()
+                sns.barplot(x=feature_imp,y=feature_imp.index)
+                plt.xlabel('Feature Importance')
+                plt.ylabel('Features')
+                title_name = f'FeatureImportance - {str(model)}'
+                plt.title(title_name,fontdict={'fontsize': 6})
+                save_name = 'FeatureImportance' + '.png'
+                plt.tight_layout()
+                plt.savefig(join(getcwd(), save_name), dpi=300)
+            else:
+                feature_imp = pd.Series(model.feature_importances_,index=self.x_test.columns).sort_values(ascending=False)
+                plt.close()
+                plt.figure()
+                sns.barplot(x=feature_imp,y=feature_imp.index)
+                plt.xlabel('Feature Importance')
+                plt.ylabel('Features')
+                title_name = f'FeatureImportance - {str(model)}'
+                plt.title(title_name,fontdict={'fontsize': 6})
+                save_name = 'FeatureImportance' + '.png'
+                plt.tight_layout()
+                plt.savefig(join(getcwd(), save_name), dpi=300)
         
 
 def main():

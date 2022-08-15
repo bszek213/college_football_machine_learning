@@ -46,5 +46,8 @@ check the amount of wins and losses are in the training label data (should be al
 ### Correlation Matrix
 ![](https://github.com/bszek213/college_football_machine_learning/blob/master/correlations.png)
 
+### Feature Importances
+![](https://github.com/bszek213/college_football_machine_learning/blob/master/FeatureImportance.png)
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
