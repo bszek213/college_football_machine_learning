@@ -24,6 +24,7 @@ dependencies:
 - spyder
 - notebook
 - keyboard
+- py-xgboost-gpu
 - pip
 - pip:
   - sportsipy

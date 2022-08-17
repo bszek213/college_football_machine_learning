@@ -36,11 +36,15 @@ import yaml
 import tensorflow as tf
 import xgboost as xgb
 from sklearn.inspection import permutation_importance
+from eli5.sklearn import PermutationImportance
+from eli5 import show_weights
+# from tensorflow.keras.layers import LSTM
 #TODO: 1. Add PCA to reduce unnecessary features
 #      3. Try different optimizers, activations 
 def keras_model(unit):
     #Keras classifier 
     model = Sequential()
+    # model.add(LSTM(12))
     model.add(Dense(units=unit,input_shape=(shape_x_train,),activation="relu"))#input shape - (features,) = input_shape=(self.x_train.shape[1],),
     # model.add(Dropout(0.3))
     model.add(Dense(units=unit,activation='relu'))
@@ -123,7 +127,7 @@ class cfb:
         # Find features with correlation greater than 0.90
         corr_matrix = np.abs(self.x.astype(float).corr())
         upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool))
-        to_drop = [column for column in upper.columns if any(upper[column] >= 0.90)]
+        to_drop = [column for column in upper.columns if any(upper[column] >= 0.75)]
         self.drop_cols = to_drop
         self.x_no_corr = self.x.drop(columns=to_drop)
         cols = self.x_no_corr.columns
@@ -134,8 +138,8 @@ class cfb:
             Q1 = np.percentile(self.x_no_corr[col_name], 25)
             Q3 = np.percentile(self.x_no_corr[col_name], 75)
             IQR = Q3 - Q1
-            upper = np.where(self.x_no_corr[col_name] >= (Q3+1.5*IQR)) #1.5 is the standard, use two to see if more data helps improve model performance
-            lower = np.where(self.x_no_corr[col_name] <= (Q1-1.5*IQR)) 
+            upper = np.where(self.x_no_corr[col_name] >= (Q3+2.0*IQR)) #1.5 is the standard, use two to see if more data helps improve model performance
+            lower = np.where(self.x_no_corr[col_name] <= (Q1-2.0*IQR)) 
             self.x_no_corr.drop(upper[0], inplace = True)
             self.x_no_corr.drop(lower[0], inplace = True)
             self.y.drop(upper[0], inplace = True)
@@ -191,6 +195,7 @@ class cfb:
             xgb_class = xgb.XGBClassifier(**self.hyper_param_dict['XGB-boost']).fit(self.x_train,self.y_train)  
             #Keras classifier 
             model = Sequential()
+            # model.add(LSTM(12))
             model.add(Dense(12, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
             # model.add(Dropout(0.3))
             model.add(Dense(12, activation='relu'))
@@ -218,9 +223,9 @@ class cfb:
             history = model.fit(self.x_train,
                         self.y_train,
                         # callbacks=[es],
-                        epochs=200, # you can set this to a big number!
-                        batch_size=32,
-                        validation_split=0.25,           
+                        epochs=400, # you can set this to a big number!
+                        batch_size=20,
+                        validation_split=0.2,           
                         # validation_data=(self.x_test, self.y_test),
                         shuffle=True,
                         verbose=1)
@@ -364,7 +369,7 @@ class cfb:
         # search_SVC = clf_SVC.fit(self.x_train,self.y_train) #This model for some reason freezes here on SVC
 
         # PerClass_err = accuracy_score(self.y_test, PerClass.predict(self.x_test))
-        print('Removed features (>=0.90 correlation): ', self.drop_cols)
+        print('Removed features (>=0.75 correlation): ', self.drop_cols)
         if isExists == False:
             print('GradientBoostingClassifier - best params: ',search_Grad.best_params_)
             print('RandomForestClassifier - best params: ',search_rand.best_params_)
@@ -460,8 +465,12 @@ class cfb:
         # plt.close()
         
     def feature_importances(self,model):
-        imps = permutation_importance(model, self.x_test, self.y_test)
         if model != "no model":
+            if 'keras' in str(model):
+                imps = PermutationImportance(model,random_state=1).fit(self.x_test, self.y_test)
+                print(show_weights(imps,feature_names=self.x_test.columns))
+            else:
+                imps = permutation_importance(model, self.x_test, self.y_test)
             if 'MLPClassifier' or 'LogisticRegression' or 'keras' in str(model):
                 feature_imp = pd.Series(imps.importances_mean,index=self.x_test.columns).sort_values(ascending=False)
                 plt.close()
