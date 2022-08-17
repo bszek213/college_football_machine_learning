@@ -14,7 +14,7 @@ python cfb_ml.py
 ```
 ### Current prediction accuracies
 ```bash
-Removed features: ['penalty_yards']
+Removed features (>=0.75 correlation):  ['rush_yds_per_att', 'first_down_pass', 'first_down_rush', 'penalty_yds', 'pass_int']
 
 # Best hyperparameters
 GradientBoostingClassifier - best params:  {'criterion': 'friedman_mse', 'learning_rate': 0.30000000000000004, 'loss': 'log_loss', 'max_depth': 2, 'max_features': 'log2', 'n_estimators': 300}
@@ -26,15 +26,15 @@ MLPClassifier - best params:  {'learning_rate': 'invscaling', 'learning_rate_ini
 KNeighborsClassifier - best params:  {'algorithm': 'auto', 'n_neighbors': 100, 'p': 1, 'weights': 'distance'}
 XGBBoost Classifier - best params: {'learning_rate': 0.1, 'max_depth': 4, 'n_estimators': 180}
 
-GradientBoostingClassifier accuracy 0.8041041558889463
-RandomForestClassifier accuracy 0.7747887566821866
-DecisionTreeClassifier accuracy 0.7068460079324022
-AdaClassifier accuracy 0.8049663735126746
-LogisticRegression  accuracy 0.8032419382652182
-MLPClassifier accuracy 0.8053112605621658
-KNeighborsClassifier accuracy 0.7306432143473013
-XGBClassifier accuracy 0.8035868253147095
-KerasClassifier: test loss, test acc: [0.41929247975349426, 0.804966390132904] 
+GradientBoostingClassifier accuracy 0.8042639593908629
+RandomForestClassifier accuracy 0.7835532994923858
+DecisionTreeClassifier accuracy 0.743756345177665
+AdaClassifier accuracy 0.8036548223350254
+LogisticRegression  accuracy 0.8093401015228426
+MLPClassifier accuracy 0.8081218274111676
+KNeighborsClassifier accuracy 0.7474111675126903
+XGBClassifier accuracy 0.8048730964467005
+KerasClassifier: test loss, test acc: [0.6931477785110474, 0.5005075931549072]
 #Keras hyperparams: optimizer='SGD' or 'Adam,loss='binary_crossentropy'
 
 
