@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-College football game predictor
+College football game classifier
 """
 from html_parse_cfb import html_to_df_web_scrape
 import argparse
@@ -466,51 +466,70 @@ class cfb:
         
     def predict_two_teams(self,model):
         while True:
-            team_1 = input('team_1: ')
-            if team_1 == 'exit':
-                break
-            team_2 = input('team_2: ')
-            year = input('year: ')
-            team_1_url = 'https://www.sports-reference.com/cfb/schools/' + team_1.lower() + '/' + str(year) + '/gamelog/'
-            team_2_url = 'https://www.sports-reference.com/cfb/schools/' + team_2.lower() + '/' + str(year) + '/gamelog/'
-            team_1_df = html_to_df_web_scrape(team_1_url)
-            team_2_df = html_to_df_web_scrape(team_2_url)
-            #team 1 create labels
-            team_1_df['game_result'].loc[team_1_df['game_result'].str.contains('W')] = 'W'
-            team_1_df['game_result'].loc[team_1_df['game_result'].str.contains('L')] = 'L'
-            team_1_df['game_result'] = team_1_df['game_result'].replace({'W': 1, 'L': 0})
-            final_data_1 = team_1_df.replace(r'^\s*$', np.NaN, regex=True) #replace empty string with NAN
-            #team 2 create labels
-            team_2_df['game_result'].loc[team_2_df['game_result'].str.contains('W')] = 'W'
-            team_2_df['game_result'].loc[team_2_df['game_result'].str.contains('L')] = 'L'
-            team_2_df['game_result'] = team_2_df['game_result'].replace({'W': 1, 'L': 0})
-            final_data_2 = team_2_df.replace(r'^\s*$', np.NaN, regex=True) #replace empty string with NAN
-            
-            if 'Unnamed: 0' in final_data_1.columns:
-                final_data_1 = final_data_1.drop(columns=['Unnamed: 0'])
-            if 'Unnamed: 0' in final_data_2.columns:
-                final_data_2 = final_data_2.drop(columns=['Unnamed: 0'])
-            #drop cols
-            final_data_1.drop(columns=self.drop_cols, inplace=True)
-            final_data_2.drop(columns=self.drop_cols, inplace=True)
-            final_data_1.drop(columns=['game_result'], inplace=True)
-            final_data_2.drop(columns=['game_result'], inplace=True)
-            
-            #create data for prediction
-            df_features_1 = final_data_1.median(axis=0,skipna=True).to_frame().T
-            df_features_2 = final_data_2.median(axis=0,skipna=True).to_frame().T
-            
-            #Subtraction method
-            features1_np = df_features_1.to_numpy()
-            features2_np = df_features_2.to_numpy()
-            diff = [a-b for a,b in zip(features1_np,features2_np)]
-            arr = np.array(diff)
-            nx,ny = arr.shape
-            final_vector = arr.reshape((1,nx*ny))
-            cols = df_features_1.columns
-            final_vector_1 = pd.DataFrame(final_vector, columns=cols)
-            Probability_win_loss = model.predict_proba(final_vector_1)
-            print(f'Probability that {team_1} will beat {team_2} is {Probability_win_loss[0][1]}')
+            try:
+                team_1 = input('team_1: ')
+                if team_1 == 'exit':
+                    break
+                team_2 = input('team_2: ')
+                year = input('year: ')
+                team_1_url = 'https://www.sports-reference.com/cfb/schools/' + team_1.lower() + '/' + str(year) + '/gamelog/'
+                team_2_url = 'https://www.sports-reference.com/cfb/schools/' + team_2.lower() + '/' + str(year) + '/gamelog/'
+                team_1_df = html_to_df_web_scrape(team_1_url)
+                team_2_df = html_to_df_web_scrape(team_2_url)
+                #team 1 create labels
+                team_1_df['game_result'].loc[team_1_df['game_result'].str.contains('W')] = 'W'
+                team_1_df['game_result'].loc[team_1_df['game_result'].str.contains('L')] = 'L'
+                team_1_df['game_result'] = team_1_df['game_result'].replace({'W': 1, 'L': 0})
+                final_data_1 = team_1_df.replace(r'^\s*$', np.NaN, regex=True) #replace empty string with NAN
+                #team 2 create labels
+                team_2_df['game_result'].loc[team_2_df['game_result'].str.contains('W')] = 'W'
+                team_2_df['game_result'].loc[team_2_df['game_result'].str.contains('L')] = 'L'
+                team_2_df['game_result'] = team_2_df['game_result'].replace({'W': 1, 'L': 0})
+                final_data_2 = team_2_df.replace(r'^\s*$', np.NaN, regex=True) #replace empty string with NAN
+                
+                if 'Unnamed: 0' in final_data_1.columns:
+                    final_data_1 = final_data_1.drop(columns=['Unnamed: 0'])
+                if 'Unnamed: 0' in final_data_2.columns:
+                    final_data_2 = final_data_2.drop(columns=['Unnamed: 0'])
+                #drop cols
+                final_data_1.drop(columns=self.drop_cols, inplace=True)
+                final_data_2.drop(columns=self.drop_cols, inplace=True)
+                final_data_1.drop(columns=['game_result'], inplace=True)
+                final_data_2.drop(columns=['game_result'], inplace=True)
+                
+                #create data for prediction
+                #TODO: create multiple features across different periods: all, last 2 games, 3 games, 4 games, 5 games
+                df_features_1 = final_data_1.median(axis=0,skipna=True).to_frame().T
+                df_features_2 = final_data_2.median(axis=0,skipna=True).to_frame().T
+                
+                #Subtraction method
+                features1_np = df_features_1.to_numpy()
+                features2_np = df_features_2.to_numpy()
+                diff = [a-b for a,b in zip(features1_np,features2_np)]
+                arr = np.array(diff)
+                nx,ny = arr.shape
+                final_vector = arr.reshape((1,nx*ny))
+                cols = df_features_1.columns
+                final_vector_1 = pd.DataFrame(final_vector, columns=cols)
+                if 'keras' in str(model):
+                    win_loss_1 = model.predict(final_vector_1) #model.predict_classes?
+                    win_loss_2 = model.predict(df_features_2)
+                    y_classes_1 = win_loss_1.argmax(axis=-1) 
+                    print(win_loss_1)
+                    print(y_classes_1)
+                else:
+                    Probability_win_loss_1 = model.predict_proba(df_features_1)
+                    Probability_win_loss_2 = model.predict_proba(df_features_2)
+                    win_loss_1 = model.predict(df_features_1)
+                    win_loss_2 = model.predict(df_features_2)
+                #     Probability_win_loss = model.predict_proba(final_vector_1)
+                #     win_loss = model.predict(final_vector_1)
+                print(f'Prediction for {team_1}: {win_loss_1}')
+                print(f'Prediction for {team_2}: {win_loss_2}')
+                print(f'{team_1} loss proba: {Probability_win_loss_1[0][0]},win proba: {Probability_win_loss_1[0][1]}')
+                print(f'{team_2} loss proba: {Probability_win_loss_2[0][0]},win proba: {Probability_win_loss_2[0][1]}')
+            except Exception as e:
+                print(f'Team not found: {e}')
         
     def feature_importances(self,model):
         if model != "no model":
