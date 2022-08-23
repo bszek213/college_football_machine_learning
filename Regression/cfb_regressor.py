@@ -143,8 +143,8 @@ class cfb_regressor():
         plt.savefig(join(getcwd(), 'prob_plots_regress',save_name), dpi=200)
     def machine(self):
         #Drop data that poorly fit the normally distribution
-        # self.x_train.drop(columns=['turnovers','first_down_penalty','fumbles_lost','pass_int'], inplace=True)
-        # self.x_test.drop(columns=['turnovers','first_down_penalty','fumbles_lost','pass_int'], inplace=True)
+        # self.x_train.drop(columns=['turnovers','first_down_penalty','fumbles_lost'], inplace=True)
+        # self.x_test.drop(columns=['turnovers','first_down_penalty','fumbles_lost'], inplace=True)
         #load in the hyperparams from file if the file exists
         final_dir = join(getcwd(), 'hyper_params.yaml')
         isExists = exists(final_dir)
@@ -202,72 +202,64 @@ class cfb_regressor():
                 'n_estimators': range(100,500,100),
                 'criterion' : ['friedman_mse', 'squared_error'],
                 'max_depth': np.arange(1, 5, 1, dtype=int),
-                'max_features' : ['auto', 'sqrt', 'log2']
+                'max_features' : [1, 'sqrt', 'log2']
                 }
-            clf = GridSearchCV(Gradclass, Grad_perm, scoring=['accuracy'],
-                                refit='accuracy', verbose=4, n_jobs=-1)
+            clf = GridSearchCV(Gradclass, Grad_perm, scoring=['neg_mean_absolute_error'],
+                                refit='neg_mean_absolute_error', verbose=4, n_jobs=-1)
             search_Grad = clf.fit(self.x_train,self.y_train)
             RandForclass = RandomForestRegressor()
             Rand_perm = {
-                'criterion' : ["gini", "entropy"],
+                'criterion' : ["squared_error", "absolute_error"],
                 'n_estimators': range(100,500,100),
-                'max_depth': np.arange(1, 5, 1, dtype=int),
+                'min_samples_split': np.arange(2, 5, 1, dtype=int),
                 'max_features' : [1, 'sqrt', 'log2']
                 }
-            clf_rand = GridSearchCV(RandForclass, Rand_perm, scoring=['accuracy'],
-                               refit='accuracy',verbose=4, n_jobs=-1)
+            clf_rand = GridSearchCV(RandForclass, Rand_perm, scoring=['neg_mean_absolute_error'],
+                               refit='neg_mean_absolute_error',verbose=4, n_jobs=-1)
             search_rand = clf_rand.fit(self.x_train,self.y_train)
             DecTreeclass = DecisionTreeRegressor()
             Dec_perm = {
                 'splitter' : ["best", "random"],
-                'criterion' : ["gini", "entropy"],
-                'max_depth': np.arange(1, 5, 1, dtype=int),
+                'criterion' : ["squared_error", "friedman_mse"],
+                'min_samples_split': np.arange(2, 5, 1, dtype=int),
                 'max_features' : [1, 'sqrt', 'log2']
                 }
-            clf_dec = GridSearchCV(DecTreeclass, Dec_perm, scoring=['accuracy'],
-                               refit='accuracy',verbose=4, n_jobs=-1)
+            clf_dec = GridSearchCV(DecTreeclass, Dec_perm, scoring=['neg_mean_absolute_error'],
+                               refit='neg_mean_absolute_error',verbose=4, n_jobs=-1)
             search_dec = clf_dec.fit(self.x_train,self.y_train)
             ada_class = AdaBoostRegressor()
             ada_perm = {'n_estimators': range(50,200,50),
                           'learning_rate': np.arange(.5,2.5,.5,dtype=float),
-                          'algorithm': ['SAMME', 'SAMME.R']}
-            clf_ada = GridSearchCV(ada_class, ada_perm, scoring=['accuracy'],
-                                refit='accuracy', verbose=4, n_jobs=-1)
+                          'loss': ['linear','square','exponential']}
+            clf_ada = GridSearchCV(ada_class, ada_perm, scoring=['neg_mean_absolute_error'],
+                                refit='neg_mean_absolute_error', verbose=4, n_jobs=-1)
             search_ada = clf_ada.fit(self.x_train,self.y_train)
-            LinReg = LinearRegression()()
-            lin_reg_perm = {
-                'penalty': ['l2'],
-                'C': np.arange(1, 5, 0.5, dtype=float),
-                'max_iter': range(100,1000,100),
-                'solver': ['lbfgs', 'liblinear', 'sag', 'saga']
-                }
-            clf_Lin = GridSearchCV(LinReg, lin_reg_perm, scoring=['accuracy'],
-                               refit='accuracy', verbose=4, n_jobs=-1)
-            search_Ling = clf_Lin.fit(self.x_train,self.y_train)
+            LinReg = LinearRegression()
+            search_Ling = LinReg.fit(self.x_train,self.y_train)
             
             MLPClass = MLPRegressor()
             MLP_perm = {
+                'activation':['identity','relu','tanh'],
                 'solver' : ['lbfgs', 'sgd', 'adam'],
                 'learning_rate' : ['constant', 'invscaling', 'adaptive'],
                 'learning_rate_init' : np.arange(0.001, 0.005, 0.001, dtype=float),
                 'max_iter': range(100,1000,200),
                 # 'tol': np.arange(0.001, 0.005, 0.001, dtype=float)
                 }
-            clf_MLP = GridSearchCV(MLPClass, MLP_perm, scoring=['accuracy'],
-                               refit='accuracy', verbose=4, n_jobs=-1)
+            clf_MLP = GridSearchCV(MLPClass, MLP_perm, scoring=['neg_mean_absolute_error'],
+                               refit='neg_mean_absolute_error', verbose=4, n_jobs=-1)
             search_MLP= clf_MLP.fit(self.x_train,self.y_train)
             KClass = KNeighborsRegressor()
             KClass_perm = {
-                'n_neighbors' : range(100,1000,100),
+                'n_neighbors' : np.arange(5,100,25),
                 'weights' : ['uniform', 'distance'],
                 'algorithm' : ['auto', 'ball_tree', 'kd_tree', 'brute'],
                 'p' : [1,2]
                 }
-            clf_KClass = GridSearchCV(KClass, KClass_perm, scoring=['accuracy'],
-                               refit='accuracy', verbose=4, n_jobs=-1)
+            clf_KClass = GridSearchCV(KClass, KClass_perm, scoring=['neg_mean_absolute_error'],
+                               refit='neg_mean_absolute_error', verbose=4, n_jobs=-1)
             search_KClass= clf_KClass.fit(self.x_train,self.y_train)
             estimator = xgb.XGBRegressor()(
-                    objective= 'binary:logistic',
                     nthread=4,
                     seed=42
                     )
@@ -279,7 +271,7 @@ class cfb_regressor():
             grid_search_xgb = GridSearchCV(
                                         estimator=estimator,
                                         param_grid=parameters_xgb,
-                                        scoring = 'accuracy',
+                                        scoring = 'neg_mean_absolute_error',
                                         n_jobs = -1,
                                         cv = 5,
                                         verbose=4
