@@ -21,7 +21,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import LinearRegression
 # from sklearn.linear_model import Perceptron
 from sklearn.neural_network import MLPRegressor
-from sklearn.metrics import explained_variance_score
+from sklearn.metrics import r2_score #explained_variance_score
 import time
 from sklearn.model_selection import GridSearchCV
 # from scipy.stats import uniform
@@ -34,12 +34,14 @@ from keras.models import Sequential
 from keras.layers import Dense#, Dropout
 # from keras.callbacks import EarlyStopping
 import yaml
+from tensorflow.keras.metrics import RootMeanSquaredError
 # import tensorflow as tf
 import xgboost as xgb
-# from sklearn.inspection import permutation_importance
-# from eli5.sklearn import PermutationImportance
-# from eli5 import show_weights
+from sklearn.inspection import permutation_importance
+from eli5.sklearn import PermutationImportance
+from eli5 import show_weights
 # from time import sleep
+#TODO: Build the keras hyperparam tuner
 class cfb_regressor():
     def __init__(self):
         print('initialize class cfb')
@@ -154,7 +156,7 @@ class cfb_regressor():
             RandForclass = RandomForestRegressor(**self.hyper_param_dict['RandomForest']).fit(self.x_train,self.y_train)
             ada_class = AdaBoostRegressor(**self.hyper_param_dict['Ada']).fit(self.x_train,self.y_train)
             DecTreeclass = DecisionTreeRegressor(**self.hyper_param_dict['DecisionTree']).fit(self.x_train,self.y_train)
-            LogReg = LinearRegression().fit(self.x_train,self.y_train)
+            LinReg = LinearRegression().fit(self.x_train,self.y_train)
             KClass = KNeighborsRegressor(**self.hyper_param_dict['KNearestNeighbor']).fit(self.x_train,self.y_train)
             MLPClass = MLPRegressor(**self.hyper_param_dict['MLP']).fit(self.x_train,self.y_train)
             xgb_class = xgb.XGBRegressor(**self.hyper_param_dict['XGB-boost']).fit(self.x_train,self.y_train)  
@@ -170,12 +172,12 @@ class cfb_regressor():
             model.summary() 
             #compile 
             model.compile(optimizer='SGD', 
-                  loss='binary_crossentropy',
-                  metrics=['mean_squared_error'])
+                  loss='mse',
+                  metrics=[RootMeanSquaredError()])
             history = model.fit(self.x_train,
                         self.y_train,
                         # callbacks=[es],
-                        epochs=400, # you can set this to a big number!
+                        epochs=200, # you can set this to a big number!
                         batch_size=20,
                         validation_split=0.2,           
                         # validation_data=(self.x_test, self.y_test),
@@ -184,15 +186,15 @@ class cfb_regressor():
             # keras_acc = history.history['accuracy']
             # pred_train = history.predict(self.x_test) #will need this in the future when I want to look at one team vs. another
             scores = model.evaluate(self.x_test, self.y_test, verbose=0)
+            keras_y_predict = model.predict(self.x_test)
             plt.figure()
-            plt.plot(history.history['accuracy'])
-            plt.plot(history.history['val_accuracy'])
-            plt.ylim(0, 1)
-            plt.title('Keras Classifier Accuracy')
+            plt.plot(history.history['root_mean_squared_error'])
+            plt.plot(history.history['val_root_mean_squared_error'])
+            plt.title('Keras Regression')
             plt.xlabel('Epochs')
-            plt.ylabel('Accuracy')
+            plt.ylabel('Square Root Mean Squared error')
             plt.legend(['train','test'])
-            save_name = 'keras_model_acc' + '.png'
+            save_name = 'keras_model_regression' + '.png'
             plt.savefig(join(getcwd(),save_name), dpi=200)
             plt.close()
         else:
@@ -279,45 +281,171 @@ class cfb_regressor():
                                         )
     
             grid_search_xgb.fit(self.x_train,self.y_train)
-            print('Removed features (>=0.75 correlation): ', self.drop_cols)
-            if isExists == False:
-                print('GradientBoostingRegressor - best params: ',search_Grad.best_params_)
-                print('RandomForestRegressor - best params: ',search_rand.best_params_)
-                print('DecisionTreeRegressor- best params: ',search_dec.best_params_)
-                # print('SVC - best params: ',search_SVC.best_params_)
-                print('AdaRegressor - best params: ',search_ada.best_params_)
-                # print('LinearRegression- best params:',search_Ling.best_params_)
-                print('MLPRegressor - best params: ',search_MLP.best_params_)
-                print('KNeighborsRegressor- best params: ',search_KClass.best_params_)
-                print('XGB-boost - best params: ',grid_search_xgb.best_params_)
-                Gradclass_err = explained_variance_score(self.y_test, search_Grad.predict(self.x_test))
-                RandForclass_err = explained_variance_score(self.y_test, search_rand.predict(self.x_test))
-                DecTreeclass_err = explained_variance_score(self.y_test, search_dec.predict(self.x_test))
-                # SVCclass_err = accuracy_score(self.y_test, search_SVC.predict(self.x_test))
-                adaclass_err = explained_variance_score(self.y_test, search_ada.predict(self.x_test))
-                LinReg_err = explained_variance_score(self.y_test, search_Ling.predict(self.x_test))
-                MLPClass_err = explained_variance_score(self.y_test, search_MLP.predict(self.x_test))
-                KClass_err = explained_variance_score(self.y_test, search_KClass.predict(self.x_test))
-                XGB_err = explained_variance_score(self.y_test, grid_search_xgb.predict(self.x_test))
-                # print(f'Keras best params: {keras_grid.best_score_}, {keras_grid.best_params_}')
-                print('GradientBoostingRegressor accuracy',Gradclass_err)
-                print('RandomForestRegressor accuracy',RandForclass_err)
-                print('DecisionTreeRegressor accuracy',DecTreeclass_err)
-                # print('SVC accuracy',SVCclass_err)
-                print('AdaRegressor accuracy',adaclass_err)
-                print('LinearRegression  accuracy',LinReg_err)
-                print('MLPRegressor accuracy',MLPClass_err)
-                print('KNeighborsRegressor accuracy',KClass_err)
-                print('XGBRegressor accuracy',XGB_err)
+        print('Removed features (>=0.75 correlation): ', self.drop_cols)
+        if isExists == False:
+            print('GradientBoostingRegressor - best params: ',search_Grad.best_params_)
+            print('RandomForestRegressor - best params: ',search_rand.best_params_)
+            print('DecisionTreeRegressor- best params: ',search_dec.best_params_)
+            # print('SVC - best params: ',search_SVC.best_params_)
+            print('AdaRegressor - best params: ',search_ada.best_params_)
+            # print('LinearRegression- best params:',search_Ling.best_params_)
+            print('MLPRegressor - best params: ',search_MLP.best_params_)
+            print('KNeighborsRegressor- best params: ',search_KClass.best_params_)
+            print('XGB-boost - best params: ',grid_search_xgb.best_params_)
+            return 'no model'
+        else:
+            Gradclass_err = r2_score(self.y_test, Gradclass.predict(self.x_test))
+            RandForclass_err = r2_score(self.y_test, RandForclass.predict(self.x_test))
+            DecTreeclass_err = r2_score(self.y_test, DecTreeclass.predict(self.x_test))
+            # SVCclass_err = accuracy_score(self.y_test, search_SVC.predict(self.x_test))
+            adaclass_err = r2_score(self.y_test, ada_class.predict(self.x_test))
+            LinReg_err = r2_score(self.y_test, LinReg.predict(self.x_test))
+            MLPClass_err = r2_score(self.y_test, MLPClass.predict(self.x_test))
+            KClass_err = r2_score(self.y_test, KClass.predict(self.x_test))
+            XGB_err = r2_score(self.y_test, xgb_class.predict(self.x_test))
+            keras_err = r2_score(self.y_test, keras_y_predict)
+            # print(f'Keras best params: {keras_grid.best_score_}, {keras_grid.best_params_}')
+            print('GradientBoostingRegressor accuracy',Gradclass_err)
+            print('RandomForestRegressor accuracy',RandForclass_err)
+            print('DecisionTreeRegressor accuracy',DecTreeclass_err)
+            # print('SVC accuracy',SVCclass_err)
+            print('AdaRegressor accuracy',adaclass_err)
+            print('LinearRegression  accuracy',LinReg_err)
+            print('MLPRegressor accuracy',MLPClass_err)
+            print('KNeighborsRegressor accuracy',KClass_err)
+            print('XGBRegressor accuracy',XGB_err)
+            print('KerasRegression accuracy ',keras_err)
+            dict_models = {'Gradient': Gradclass_err,
+                           'RandomForest': RandForclass_err,
+                           'DecisionTree': DecTreeclass_err,
+                           'Adaboost': adaclass_err,
+                           'Lin': LinReg_err,
+                           'Perceptron': MLPClass_err,
+                           'Kneighbor': KClass_err,
+                           'XGB': XGB_err,
+                           'Keras': keras_err,
+                           }
+            model_name = max(dict_models, key=dict_models.get)
+            print(f'Model with the highest accuracy: {model_name}')
+            if model_name == 'Gradient':
+                return Gradclass
+            elif model_name == 'RandomForest':
+                return RandForclass
+            elif model_name == 'DecisionTree':
+                return DecTreeclass
+            elif model_name == 'Adaboost':
+                return ada_class
+            elif model_name == 'Lin':
+                return LinReg
+            elif model_name == 'Perceptron':
+                return MLPClass
+            elif model_name == 'Kneighbor':
+                return KClass
+            elif model_name == 'XGB':
+                return xgb_class
+            elif model_name == 'Keras':
+                return model
+
+    def predict_two_teams(self,model):
+        while True:
+            try:
+                team_1 = input('team_1: ')
+                if team_1 == 'exit':
+                    break
+                team_2 = input('team_2: ')
+                year = input('year: ')
+                team_1_url = 'https://www.sports-reference.com/cfb/schools/' + team_1.lower() + '/' + str(year) + '/gamelog/'
+                team_2_url = 'https://www.sports-reference.com/cfb/schools/' + team_2.lower() + '/' + str(year) + '/gamelog/'
+                team_1_df = html_to_df_web_scrape(team_1_url)
+                team_2_df = html_to_df_web_scrape(team_2_url)
+                #clean team 1 labels
+                team_1_df['game_result'] = team_1_df['game_result'].str.replace('W','')
+                team_1_df['game_result'] = team_1_df['game_result'].str.replace('L','')
+                team_1_df['game_result'] = team_1_df['game_result'].str.replace('(','')
+                team_1_df['game_result'] = team_1_df['game_result'].str.replace(')','')
+                team_1_df['game_result'] = team_1_df['game_result'].str.split('-').str[0]
+                team_1_df['game_result'] = team_1_df['game_result'].str.replace('-','')
+                final_data_1 = team_1_df.replace(r'^\s*$', np.NaN, regex=True)
+                #clean team 2 labels
+                team_2_df['game_result'] = team_2_df['game_result'].str.replace('W','')
+                team_2_df['game_result'] = team_2_df['game_result'].str.replace('L','')
+                team_2_df['game_result'] = team_2_df['game_result'].str.replace('(','')
+                team_2_df['game_result'] = team_2_df['game_result'].str.replace(')','')
+                team_2_df['game_result'] = team_2_df['game_result'].str.split('-').str[0]
+                team_2_df['game_result'] = team_2_df['game_result'].str.replace('-','')
+                final_data_2 = team_2_df.replace(r'^\s*$', np.NaN, regex=True) #replace empty string with NAN
+                
+                if 'Unnamed: 0' in final_data_1.columns:
+                    final_data_1 = final_data_1.drop(columns=['Unnamed: 0'])
+                if 'Unnamed: 0' in final_data_2.columns:
+                    final_data_2 = final_data_2.drop(columns=['Unnamed: 0'])
+                
+                #drop cols
+                final_data_1.drop(columns=self.drop_cols, inplace=True)
+                final_data_2.drop(columns=self.drop_cols, inplace=True)
+                final_data_1.drop(columns=['game_result'], inplace=True)
+                final_data_2.drop(columns=['game_result'], inplace=True)
+                
+                #create data for prediction
+                #TODO: create multiple features across different periods: all, last 2 games, 3 games, 4 games, 5 games
+                df_features_1 = final_data_1.median(axis=0,skipna=True).to_frame().T
+                df_features_2 = final_data_2.median(axis=0,skipna=True).to_frame().T
+                
+                #predict outcomes 
+                if 'keras' in str(model):
+                    score_val_1 = model.predict(df_features_1) #model.predict_classes?
+                    score_val_2 = model.predict(df_features_2)
+                    y_classes_1 = score_val_1.argmax(axis=-1) 
+                    print(score_val_1)
+                    print(y_classes_1)
+                else:
+                    score_val_1 = model.predict(df_features_1)
+                    score_val_2 = model.predict(df_features_2)
+                print(f'Score prediction for {team_1}: {score_val_1}')
+                print(f'score prediction for {team_2}: {score_val_2}')
+            except Exception as e:
+                print(f'Team not found: {e}')
+
+    def feature_importances(self,model):
+        if model != "no model":
+            if 'keras' in str(model):
+                imps = PermutationImportance(model,random_state=1).fit(self.x_test, self.y_test)
+                print(show_weights(imps,feature_names=self.x_test.columns))
+            else:
+                imps = permutation_importance(model, self.x_test, self.y_test)
+            if 'MLPClassifier' or 'LinearRegression' or 'keras' in str(model):
+                feature_imp = pd.Series(imps.importances_mean,index=self.x_test.columns).sort_values(ascending=False)
+                plt.close()
+                plt.figure()
+                sns.barplot(x=feature_imp,y=feature_imp.index)
+                plt.xlabel('Feature Importance')
+                plt.ylabel('Features')
+                title_name = f'FeatureImportance - {str(model)}'
+                plt.title(title_name,fontdict={'fontsize': 6})
+                save_name = 'FeatureImportance' + '.png'
+                plt.tight_layout()
+                plt.savefig(join(getcwd(), save_name), dpi=300)
+            else:
+                feature_imp = pd.Series(model.feature_importances_,index=self.x_test.columns).sort_values(ascending=False)
+                plt.close()
+                plt.figure()
+                sns.barplot(x=feature_imp,y=feature_imp.index)
+                plt.xlabel('Feature Importance')
+                plt.ylabel('Features')
+                title_name = f'FeatureImportance - {str(model)}'
+                plt.title(title_name,fontdict={'fontsize': 6})
+                save_name = 'FeatureImportanceRegress' + '.png'
+                plt.tight_layout()
+                plt.savefig(join(getcwd(), save_name), dpi=300)
 def main():
     start_time = time.time()
     cfb_class = cfb_regressor()
     cfb_class.read_hyper_params()
     cfb_class.get_teams()
     cfb_class.split()
-    cfb_class.machine()
-    # cfb_class.predict_two_teams(model)
-    # cfb_class.feature_importances(model)
+    model = cfb_class.machine()
+    cfb_class.predict_two_teams(model)
+    cfb_class.feature_importances(model)
     print("--- %s seconds ---" % (time.time() - start_time))
 
 if __name__ == '__main__':
