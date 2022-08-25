@@ -154,7 +154,7 @@ class cfb_regressor():
             RandForclass = RandomForestRegressor(**self.hyper_param_dict['RandomForest']).fit(self.x_train,self.y_train)
             ada_class = AdaBoostRegressor(**self.hyper_param_dict['Ada']).fit(self.x_train,self.y_train)
             DecTreeclass = DecisionTreeRegressor(**self.hyper_param_dict['DecisionTree']).fit(self.x_train,self.y_train)
-            LogReg = LinearRegression(**self.hyper_param_dict['LinearRegression']).fit(self.x_train,self.y_train)
+            LogReg = LinearRegression().fit(self.x_train,self.y_train)
             KClass = KNeighborsRegressor(**self.hyper_param_dict['KNearestNeighbor']).fit(self.x_train,self.y_train)
             MLPClass = MLPRegressor(**self.hyper_param_dict['MLPClassifier']).fit(self.x_train,self.y_train)
             xgb_class = xgb.XGBRegressor(**self.hyper_param_dict['XGB-boost']).fit(self.x_train,self.y_train)  
