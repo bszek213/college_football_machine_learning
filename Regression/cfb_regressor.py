@@ -21,31 +21,31 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import LinearRegression
 # from sklearn.linear_model import Perceptron
 from sklearn.neural_network import MLPRegressor
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import explained_variance_score
 import time
 from sklearn.model_selection import GridSearchCV
 # from scipy.stats import uniform
 from os import getcwd
 from os.path import join, exists
 from scipy import stats
-from keras.utils import np_utils
+# from keras.utils import np_utils
 # for modeling
 from keras.models import Sequential
-from keras.layers import Dense, Dropout
-from keras.callbacks import EarlyStopping
+from keras.layers import Dense#, Dropout
+# from keras.callbacks import EarlyStopping
 import yaml
-import tensorflow as tf
+# import tensorflow as tf
 import xgboost as xgb
-from sklearn.inspection import permutation_importance
-from eli5.sklearn import PermutationImportance
-from eli5 import show_weights
-from time import sleep
+# from sklearn.inspection import permutation_importance
+# from eli5.sklearn import PermutationImportance
+# from eli5 import show_weights
+# from time import sleep
 class cfb_regressor():
     def __init__(self):
         print('initialize class cfb')
         self.all_data = pd.DataFrame()
     def read_hyper_params(self):
-        final_dir = join(getcwd(), 'hyper_params.yaml')
+        final_dir = join(getcwd(), 'hyper_params_regress.yaml')
         isExists = exists(final_dir)
         if isExists == True:
             with open(final_dir) as file:
@@ -146,15 +146,16 @@ class cfb_regressor():
         # self.x_train.drop(columns=['turnovers','first_down_penalty','fumbles_lost'], inplace=True)
         # self.x_test.drop(columns=['turnovers','first_down_penalty','fumbles_lost'], inplace=True)
         #load in the hyperparams from file if the file exists
-        final_dir = join(getcwd(), 'hyper_params.yaml')
+        final_dir = join(getcwd(), 'hyper_params_regress.yaml')
         isExists = exists(final_dir)
         if isExists == True:
-            Gradclass = GradientBoostingRegressor(**self.hyper_param_dict['GradientBoostingClassifier']).fit(self.x_train,self.y_train)
-            RandForclass = RandomForestRegressor(**self.hyper_param_dict['RandomForestClassifier']).fit(self.x_train,self.y_train)
-            ada_class = AdaBoostRegressor(**self.hyper_param_dict['AdaClassifier']).fit(self.x_train,self.y_train)
-            DecTreeclass = DecisionTreeRegressor(**self.hyper_param_dict['DecisionTreeClassifier']).fit(self.x_train,self.y_train)
-            LogReg = LinearRegression(**self.hyper_param_dict['LogisticRegression']).fit(self.x_train,self.y_train)
-            KClass = KNeighborsRegressor(**self.hyper_param_dict['KNeighborsClassifier']).fit(self.x_train,self.y_train)
+            print('Found yaml - reading in hyperparameters now and fitting')
+            Gradclass = GradientBoostingRegressor(**self.hyper_param_dict['GradientBoosting']).fit(self.x_train,self.y_train)
+            RandForclass = RandomForestRegressor(**self.hyper_param_dict['RandomForest']).fit(self.x_train,self.y_train)
+            ada_class = AdaBoostRegressor(**self.hyper_param_dict['Ada']).fit(self.x_train,self.y_train)
+            DecTreeclass = DecisionTreeRegressor(**self.hyper_param_dict['DecisionTree']).fit(self.x_train,self.y_train)
+            LogReg = LinearRegression(**self.hyper_param_dict['LinearRegression']).fit(self.x_train,self.y_train)
+            KClass = KNeighborsRegressor(**self.hyper_param_dict['KNearestNeighbor']).fit(self.x_train,self.y_train)
             MLPClass = MLPRegressor(**self.hyper_param_dict['MLPClassifier']).fit(self.x_train,self.y_train)
             xgb_class = xgb.XGBRegressor(**self.hyper_param_dict['XGB-boost']).fit(self.x_train,self.y_train)  
             #Keras classifier 
@@ -259,7 +260,7 @@ class cfb_regressor():
             clf_KClass = GridSearchCV(KClass, KClass_perm, scoring=['neg_mean_absolute_error'],
                                refit='neg_mean_absolute_error', verbose=4, n_jobs=-1)
             search_KClass= clf_KClass.fit(self.x_train,self.y_train)
-            estimator = xgb.XGBRegressor()(
+            estimator = xgb.XGBRegressor(
                     nthread=4,
                     seed=42
                     )
@@ -285,19 +286,19 @@ class cfb_regressor():
                 print('DecisionTreeRegressor- best params: ',search_dec.best_params_)
                 # print('SVC - best params: ',search_SVC.best_params_)
                 print('AdaRegressor - best params: ',search_ada.best_params_)
-                print('LinearRegression- best params:',search_Ling.best_params_)
+                # print('LinearRegression- best params:',search_Ling.best_params_)
                 print('MLPRegressor - best params: ',search_MLP.best_params_)
                 print('KNeighborsRegressor- best params: ',search_KClass.best_params_)
                 print('XGB-boost - best params: ',grid_search_xgb.best_params_)
-                Gradclass_err = accuracy_score(self.y_test, search_Grad.predict(self.x_test))
-                RandForclass_err = accuracy_score(self.y_test, search_rand.predict(self.x_test))
-                DecTreeclass_err = accuracy_score(self.y_test, search_dec.predict(self.x_test))
+                Gradclass_err = explained_variance_score(self.y_test, search_Grad.predict(self.x_test))
+                RandForclass_err = explained_variance_score(self.y_test, search_rand.predict(self.x_test))
+                DecTreeclass_err = explained_variance_score(self.y_test, search_dec.predict(self.x_test))
                 # SVCclass_err = accuracy_score(self.y_test, search_SVC.predict(self.x_test))
-                adaclass_err = accuracy_score(self.y_test, search_ada.predict(self.x_test))
-                LinReg_err = accuracy_score(self.y_test, search_Ling.predict(self.x_test))
-                MLPClass_err = accuracy_score(self.y_test, search_MLP.predict(self.x_test))
-                KClass_err = accuracy_score(self.y_test, search_KClass.predict(self.x_test))
-                XGB_err = accuracy_score(self.y_test, grid_search_xgb.predict(self.x_test))
+                adaclass_err = explained_variance_score(self.y_test, search_ada.predict(self.x_test))
+                LinReg_err = explained_variance_score(self.y_test, search_Ling.predict(self.x_test))
+                MLPClass_err = explained_variance_score(self.y_test, search_MLP.predict(self.x_test))
+                KClass_err = explained_variance_score(self.y_test, search_KClass.predict(self.x_test))
+                XGB_err = explained_variance_score(self.y_test, grid_search_xgb.predict(self.x_test))
                 # print(f'Keras best params: {keras_grid.best_score_}, {keras_grid.best_params_}')
                 print('GradientBoostingRegressor accuracy',Gradclass_err)
                 print('RandomForestRegressor accuracy',RandForclass_err)
