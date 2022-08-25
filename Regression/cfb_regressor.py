@@ -42,6 +42,7 @@ from eli5.sklearn import PermutationImportance
 from eli5 import show_weights
 # from time import sleep
 #TODO: Build the keras hyperparam tuner
+# Save models with pickle to avoid refitting time
 class cfb_regressor():
     def __init__(self):
         print('initialize class cfb')
@@ -99,7 +100,7 @@ class cfb_regressor():
         # Find features with correlation greater than 0.90
         corr_matrix = np.abs(self.x.astype(float).corr())
         upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool))
-        to_drop = [column for column in upper.columns if any(upper[column] >= 0.75)]
+        to_drop = [column for column in upper.columns if any(upper[column] >= 0.85)]
         self.drop_cols = to_drop
         self.x_no_corr = self.x.drop(columns=to_drop)
         cols = self.x_no_corr.columns
@@ -281,7 +282,7 @@ class cfb_regressor():
                                         )
     
             grid_search_xgb.fit(self.x_train,self.y_train)
-        print('Removed features (>=0.75 correlation): ', self.drop_cols)
+        print('Removed features (>=0.85 correlation): ', self.drop_cols)
         if isExists == False:
             print('GradientBoostingRegressor - best params: ',search_Grad.best_params_)
             print('RandomForestRegressor - best params: ',search_rand.best_params_)
