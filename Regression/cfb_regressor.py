@@ -21,7 +21,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import LinearRegression
 # from sklearn.linear_model import Perceptron
 from sklearn.neural_network import MLPRegressor
-from sklearn.metrics import r2_score #explained_variance_score
+from sklearn.metrics import r2_score, mean_squared_error #explained_variance_score
 import time
 from sklearn.model_selection import GridSearchCV
 # from scipy.stats import uniform
@@ -163,15 +163,15 @@ class cfb_regressor():
             #Keras classifier 
             model = Sequential()
             # model.add(LSTM(12))
-            model.add(Dense(12, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
+            model.add(Dense(24, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
             # model.add(Dropout(0.3))
+            model.add(Dense(24, activation='relu'))
+            model.add(Dense(24, activation='softmax'))
             model.add(Dense(12, activation='relu'))
-            model.add(Dense(12, activation='softmax'))
-            model.add(Dense(12, activation='relu'))
-            model.add(Dense(1, activation='sigmoid'))
+            model.add(Dense(8, activation='sigmoid'))
             model.summary() 
             #compile 
-            model.compile(optimizer='SGD', 
+            model.compile(optimizer='adam', 
                   loss='mse',
                   metrics=[RootMeanSquaredError()])
             history = model.fit(self.x_train,
@@ -294,6 +294,7 @@ class cfb_regressor():
             print('XGB-boost - best params: ',grid_search_xgb.best_params_)
             return 'no model'
         else:
+            #r2_score
             Gradclass_err = r2_score(self.y_test, Gradclass.predict(self.x_test))
             RandForclass_err = r2_score(self.y_test, RandForclass.predict(self.x_test))
             DecTreeclass_err = r2_score(self.y_test, DecTreeclass.predict(self.x_test))
@@ -304,7 +305,6 @@ class cfb_regressor():
             KClass_err = r2_score(self.y_test, KClass.predict(self.x_test))
             XGB_err = r2_score(self.y_test, xgb_class.predict(self.x_test))
             keras_err = r2_score(self.y_test, keras_y_predict)
-            # print(f'Keras best params: {keras_grid.best_score_}, {keras_grid.best_params_}')
             print('GradientBoostingRegressor accuracy',Gradclass_err)
             print('RandomForestRegressor accuracy',RandForclass_err)
             print('DecisionTreeRegressor accuracy',DecTreeclass_err)
@@ -315,6 +315,7 @@ class cfb_regressor():
             print('KNeighborsRegressor accuracy',KClass_err)
             print('XGBRegressor accuracy',XGB_err)
             print('KerasRegression accuracy ',keras_err)
+            print('====================================')
             dict_models = {'Gradient': Gradclass_err,
                            'RandomForest': RandForclass_err,
                            'DecisionTree': DecTreeclass_err,
@@ -325,25 +326,61 @@ class cfb_regressor():
                            'XGB': XGB_err,
                            'Keras': keras_err,
                            }
-            model_name = max(dict_models, key=dict_models.get)
-            print(f'Model with the highest accuracy: {model_name}')
-            if model_name == 'Gradient':
+            model_name_r2 = max(dict_models, key=dict_models.get)
+            print(f'Model with the highest r2: {model_name_r2}')
+            print('====================================')
+            #mse
+            Gradclass_err = np.sqrt(mean_squared_error(self.y_test, Gradclass.predict(self.x_test)))
+            RandForclass_err = np.sqrt(mean_squared_error(self.y_test, RandForclass.predict(self.x_test)))
+            DecTreeclass_err = np.sqrt(mean_squared_error(self.y_test, DecTreeclass.predict(self.x_test)))
+            # SVCclass_err = accuracy_score(self.y_test, search_SVC.predict(self.x_test))
+            adaclass_err = np.sqrt(mean_squared_error(self.y_test, ada_class.predict(self.x_test)))
+            LinReg_err = np.sqrt(mean_squared_error(self.y_test, LinReg.predict(self.x_test)))
+            MLPClass_err = np.sqrt(mean_squared_error(self.y_test, MLPClass.predict(self.x_test)))
+            KClass_err = np.sqrt(mean_squared_error(self.y_test, KClass.predict(self.x_test)))
+            XGB_err = np.sqrt(mean_squared_error(self.y_test, xgb_class.predict(self.x_test)))
+            keras_err = np.sqrt(mean_squared_error(self.y_test, keras_y_predict))
+            # print(f'Keras best params: {keras_grid.best_score_}, {keras_grid.best_params_}')
+            print('GradientBoostingRegressor rmse',Gradclass_err)
+            print('RandomForestRegressor rmse',RandForclass_err)
+            print('DecisionTreeRegressor rmse',DecTreeclass_err)
+            # print('SVC accuracy',SVCclass_err)
+            print('AdaRegressor rmse',adaclass_err)
+            print('LinearRegression  rmse',LinReg_err)
+            print('MLPRegressor rmse',MLPClass_err)
+            print('KNeighborsRegressor rmse',KClass_err)
+            print('XGBRegressor rmse',XGB_err)
+            print('KerasRegression rmse ',keras_err)
+            dict_models = {'Gradient': Gradclass_err,
+                           'RandomForest': RandForclass_err,
+                           'DecisionTree': DecTreeclass_err,
+                           'Adaboost': adaclass_err,
+                           'Lin': LinReg_err,
+                           'Perceptron': MLPClass_err,
+                           'Kneighbor': KClass_err,
+                           'XGB': XGB_err,
+                           'Keras': keras_err,
+                           }
+            model_name_rmse = min(dict_models, key=dict_models.get)
+            print(f'Model with the lowest RMSE: {model_name_rmse}')
+            print('====================================')
+            if model_name_r2 == 'Gradient':
                 return Gradclass
-            elif model_name == 'RandomForest':
+            elif model_name_r2 == 'RandomForest':
                 return RandForclass
-            elif model_name == 'DecisionTree':
+            elif model_name_r2 == 'DecisionTree':
                 return DecTreeclass
-            elif model_name == 'Adaboost':
+            elif model_name_r2 == 'Adaboost':
                 return ada_class
-            elif model_name == 'Lin':
+            elif model_name_r2 == 'Lin':
                 return LinReg
-            elif model_name == 'Perceptron':
+            elif model_name_r2 == 'Perceptron':
                 return MLPClass
-            elif model_name == 'Kneighbor':
+            elif model_name_r2 == 'Kneighbor':
                 return KClass
-            elif model_name == 'XGB':
+            elif model_name_r2 == 'XGB':
                 return xgb_class
-            elif model_name == 'Keras':
+            elif model_name_r2 == 'Keras':
                 return model
 
     def predict_two_teams(self,model):
@@ -387,10 +424,24 @@ class cfb_regressor():
                 final_data_2.drop(columns=['game_result'], inplace=True)
                 
                 #create data for prediction
-                #TODO: create multiple features across different periods: all, last 2 games, 3 games, 4 games, 5 games
                 df_features_1 = final_data_1.median(axis=0,skipna=True).to_frame().T
                 df_features_2 = final_data_2.median(axis=0,skipna=True).to_frame().T
-                
+                print('====================================')
+                print(f'Score prediction for {team_1} across season: {model.predict(final_data_1.median(axis=0,skipna=True).to_frame().T)}')
+                print(f'Score prediction for {team_2} across season: {model.predict(final_data_2.median(axis=0,skipna=True).to_frame().T)}')
+                print(f'Score prediction for {team_1} last game: {model.predict(final_data_1.iloc[-1:].median(axis=0,skipna=True).to_frame().T)}')
+                print(f'Score prediction for {team_2} last game: {model.predict(final_data_2.iloc[-1:].median(axis=0,skipna=True).to_frame().T)}')
+                print(f'Score prediction for {team_1} last 2 game: {model.predict(final_data_1.iloc[-2:].median(axis=0,skipna=True).to_frame().T)}')
+                print(f'Score prediction for {team_2} last 2 game: {model.predict(final_data_2.iloc[-2:].median(axis=0,skipna=True).to_frame().T)}')
+                print(f'Score prediction for {team_1} last 3 game: {model.predict(final_data_1.iloc[-3:].median(axis=0,skipna=True).to_frame().T)}')
+                print(f'Score prediction for {team_2} last 3 game: {model.predict(final_data_2.iloc[-3:].median(axis=0,skipna=True).to_frame().T)}')
+                print(f'Score prediction for {team_1} last 4 game: {model.predict(final_data_1.iloc[-4:].median(axis=0,skipna=True).to_frame().T)}')
+                print(f'Score prediction for {team_2} last 4 game: {model.predict(final_data_2.iloc[-4:].median(axis=0,skipna=True).to_frame().T)}')
+                print(f'Score prediction for {team_1} last 5 game: {model.predict(final_data_1.iloc[-5:].median(axis=0,skipna=True).to_frame().T)}')
+                print(f'Score prediction for {team_2} last 5 game: {model.predict(final_data_2.iloc[-5:].median(axis=0,skipna=True).to_frame().T)}')
+                print('====================================')
+                # score_val_1 = model.predict(df_features_1)
+                # score_val_2 = model.predict(df_features_2)
                 #predict outcomes 
                 if 'keras' in str(model):
                     score_val_1 = model.predict(df_features_1) #model.predict_classes?
@@ -398,11 +449,13 @@ class cfb_regressor():
                     y_classes_1 = score_val_1.argmax(axis=-1) 
                     print(score_val_1)
                     print(y_classes_1)
-                else:
-                    score_val_1 = model.predict(df_features_1)
-                    score_val_2 = model.predict(df_features_2)
-                print(f'Score prediction for {team_1}: {score_val_1}')
-                print(f'score prediction for {team_2}: {score_val_2}')
+                    print(f'Score prediction for {team_1}: {score_val_1}')
+                    print(f'score prediction for {team_2}: {score_val_2}')
+                # else:
+                #     score_val_1 = model.predict(df_features_1)
+                #     score_val_2 = model.predict(df_features_2)
+                # print(f'Score prediction for {team_1}: {score_val_1}')
+                # print(f'score prediction for {team_2}: {score_val_2}')
             except Exception as e:
                 print(f'Team not found: {e}')
 
