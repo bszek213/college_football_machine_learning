@@ -156,7 +156,7 @@ class cfb_regressor():
             DecTreeclass = DecisionTreeRegressor(**self.hyper_param_dict['DecisionTree']).fit(self.x_train,self.y_train)
             LogReg = LinearRegression().fit(self.x_train,self.y_train)
             KClass = KNeighborsRegressor(**self.hyper_param_dict['KNearestNeighbor']).fit(self.x_train,self.y_train)
-            MLPClass = MLPRegressor(**self.hyper_param_dict['MLPClassifier']).fit(self.x_train,self.y_train)
+            MLPClass = MLPRegressor(**self.hyper_param_dict['MLP']).fit(self.x_train,self.y_train)
             xgb_class = xgb.XGBRegressor(**self.hyper_param_dict['XGB-boost']).fit(self.x_train,self.y_train)  
             #Keras classifier 
             model = Sequential()
@@ -171,7 +171,7 @@ class cfb_regressor():
             #compile 
             model.compile(optimizer='SGD', 
                   loss='binary_crossentropy',
-                  metrics=['accuracy'])
+                  metrics=['mean_squared_error'])
             history = model.fit(self.x_train,
                         self.y_train,
                         # callbacks=[es],
