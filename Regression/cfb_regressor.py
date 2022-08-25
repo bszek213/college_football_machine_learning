@@ -10,7 +10,7 @@ from sportsipy.ncaaf.teams import Teams
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-# from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.preprocessing import MinMaxScaler #,StandardScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.ensemble import GradientBoostingRegressor,RandomForestRegressor
@@ -216,19 +216,21 @@ class cfb_regressor():
             #Keras classifier 
             model = Sequential()
             # model.add(LSTM(12))
-            model.add(Dense(12, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
+            scaler = MinMaxScaler(feature_range=(0, 1))
+            scaled_data = scaler.fit_transform(self.x_train)
+            scaled_train = pd.DataFrame(scaled_data, columns = self.x_train.columns)
+            model.add(Dense(12, input_shape=(scaled_train.shape[1],), activation="linear"))#input shape - (features,)
             # model.add(Dropout(0.3))
             model.add(Dense(12, activation='relu'))
-            model.add(Dense(8, activation='softmax'))
-            model.add(Dense(8, activation='relu'))
+            model.add(Dense(8, activation='linear'))
             model.add(Dense(4, activation='relu'))
-            model.add(Dense(1, activation='sigmoid'))
+            model.add(Dense(1, activation='linear'))
             model.summary() 
             #compile 
             model.compile(optimizer='adam', 
                   loss='mse',
                   metrics=[RootMeanSquaredError()])
-            history = model.fit(self.x_train,
+            history = model.fit(scaled_train,
                         self.y_train,
                         # callbacks=[es],
                         epochs=100, # you can set this to a big number!
@@ -239,8 +241,10 @@ class cfb_regressor():
                         verbose=1)
             # keras_acc = history.history['accuracy']
             # pred_train = history.predict(self.x_test) #will need this in the future when I want to look at one team vs. another
-            scores = model.evaluate(self.x_test, self.y_test, verbose=0)
-            keras_y_predict = model.predict(self.x_test)
+            scaled_data = scaler.fit_transform(self.x_test)
+            scaled_test = pd.DataFrame(scaled_data, columns = self.x_test.columns)
+            scores = model.evaluate(scaled_test, self.y_test, verbose=0)
+            keras_y_predict = model.predict(scaled_test)
             plt.figure()
             plt.plot(history.history['root_mean_squared_error'])
             plt.plot(history.history['val_root_mean_squared_error'])
