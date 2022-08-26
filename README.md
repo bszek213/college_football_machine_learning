@@ -69,7 +69,7 @@ check the amount of wins and losses are in the training label data (should be al
 ![](https://github.com/bszek213/college_football_machine_learning/blob/master/FeatureImportance.png)
 
 ### Feature Importances Regression
-![](https://github.com/bszek213/college_football_machine_learning/regression/Regression/FeatureImportance.png)
+![](https://github.com/bszek213/college_football_machine_learning/blob/regression/Regression/FeatureImportance.png)
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
