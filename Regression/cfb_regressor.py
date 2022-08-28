@@ -5,20 +5,12 @@ College football game regressor
 @author: brianszekely
 """
 from html_parse_cfb import html_to_df_web_scrape
-<<<<<<< HEAD
 # import argparse
-=======
-import argparse
->>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
 from sportsipy.ncaaf.teams import Teams
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-<<<<<<< HEAD
 from sklearn.preprocessing import MinMaxScaler #,StandardScaler
-=======
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
->>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.ensemble import GradientBoostingRegressor,RandomForestRegressor
@@ -48,10 +40,7 @@ import xgboost as xgb
 from sklearn.inspection import permutation_importance
 from eli5.sklearn import PermutationImportance
 from eli5 import show_weights
-<<<<<<< HEAD
 import pickle
-=======
->>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
 # from time import sleep
 #TODO: Build the keras hyperparam tuner
 # Save models with pickle to avoid refitting time
@@ -99,10 +88,7 @@ class cfb_regressor():
             self.all_data.to_csv('all_data_regresso.csv')
         else:
             self.all_data = pd.read_csv(final_dir)
-<<<<<<< HEAD
 
-=======
->>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
     def split(self):
         self.y = self.all_data['game_result']
         self.x = self.all_data.drop(columns=['game_result'])
@@ -116,11 +102,7 @@ class cfb_regressor():
         # Find features with correlation greater than 0.90
         corr_matrix = np.abs(self.x.astype(float).corr())
         upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool))
-<<<<<<< HEAD
         to_drop = [column for column in upper.columns if any(upper[column] >= 0.8)]
-=======
-        to_drop = [column for column in upper.columns if any(upper[column] >= 0.85)]
->>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
         self.drop_cols = to_drop
         self.x_no_corr = self.x.drop(columns=to_drop)
         cols = self.x_no_corr.columns
@@ -145,11 +127,7 @@ class cfb_regressor():
         print(f'new feature dataframe shape after outlier removal: {self.x_no_corr.shape}')
 
         #split data into train and test
-<<<<<<< HEAD
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x_no_corr, self.y, train_size=0.8)
-=======
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x_no_corr,self.y, train_size=0.8)
->>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
         for col_name in cols:
             # self.x_train[col_name], _ = stats.boxcox(self.x_train[col_name])
             self.prob_plots(col_name)
@@ -168,10 +146,7 @@ class cfb_regressor():
         save_name = 'probplot_' + col_name + '.png'
         plt.tight_layout()
         plt.savefig(join(getcwd(), 'prob_plots_regress',save_name), dpi=200)
-<<<<<<< HEAD
 
-=======
->>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
     def machine(self):
         #Drop data that poorly fit the normally distribution
         # self.x_train.drop(columns=['turnovers','first_down_penalty','fumbles_lost'], inplace=True)
@@ -181,7 +156,6 @@ class cfb_regressor():
         isExists = exists(final_dir)
         if isExists == True:
             print('Found yaml - reading in hyperparameters now and fitting')
-<<<<<<< HEAD
             
             if exists(join(getcwd(),'saved_models', 'Gradclass.sav')) == False:
                 Gradclass = GradientBoostingRegressor(**self.hyper_param_dict['GradientBoosting']).fit(self.x_train,self.y_train)
@@ -251,41 +225,15 @@ class cfb_regressor():
             model.add(Dense(8, activation='linear'))
             model.add(Dense(4, activation='relu'))
             model.add(Dense(1, activation='linear'))
-=======
-            Gradclass = GradientBoostingRegressor(**self.hyper_param_dict['GradientBoosting']).fit(self.x_train,self.y_train)
-            RandForclass = RandomForestRegressor(**self.hyper_param_dict['RandomForest']).fit(self.x_train,self.y_train)
-            ada_class = AdaBoostRegressor(**self.hyper_param_dict['Ada']).fit(self.x_train,self.y_train)
-            DecTreeclass = DecisionTreeRegressor(**self.hyper_param_dict['DecisionTree']).fit(self.x_train,self.y_train)
-            LinReg = LinearRegression().fit(self.x_train,self.y_train)
-            KClass = KNeighborsRegressor(**self.hyper_param_dict['KNearestNeighbor']).fit(self.x_train,self.y_train)
-            MLPClass = MLPRegressor(**self.hyper_param_dict['MLP']).fit(self.x_train,self.y_train)
-            xgb_class = xgb.XGBRegressor(**self.hyper_param_dict['XGB-boost']).fit(self.x_train,self.y_train)  
-            #Keras classifier 
-            model = Sequential()
-            # model.add(LSTM(12))
-            model.add(Dense(24, input_shape=(self.x_train.shape[1],), activation="relu"))#input shape - (features,)
-            # model.add(Dropout(0.3))
-            model.add(Dense(24, activation='relu'))
-            model.add(Dense(24, activation='softmax'))
-            model.add(Dense(12, activation='relu'))
-            model.add(Dense(8, activation='sigmoid'))
->>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
             model.summary() 
             #compile 
             model.compile(optimizer='adam', 
                   loss='mse',
                   metrics=[RootMeanSquaredError()])
-<<<<<<< HEAD
             history = model.fit(scaled_train,
                         self.y_train,
                         # callbacks=[es],
                         epochs=100, # you can set this to a big number!
-=======
-            history = model.fit(self.x_train,
-                        self.y_train,
-                        # callbacks=[es],
-                        epochs=200, # you can set this to a big number!
->>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
                         batch_size=20,
                         validation_split=0.2,           
                         # validation_data=(self.x_test, self.y_test),
@@ -293,15 +241,10 @@ class cfb_regressor():
                         verbose=1)
             # keras_acc = history.history['accuracy']
             # pred_train = history.predict(self.x_test) #will need this in the future when I want to look at one team vs. another
-<<<<<<< HEAD
             scaled_data = scaler.fit_transform(self.x_test)
             scaled_test = pd.DataFrame(scaled_data, columns = self.x_test.columns)
             scores = model.evaluate(scaled_test, self.y_test, verbose=0)
             keras_y_predict = model.predict(scaled_test)
-=======
-            scores = model.evaluate(self.x_test, self.y_test, verbose=0)
-            keras_y_predict = model.predict(self.x_test)
->>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
             plt.figure()
             plt.plot(history.history['root_mean_squared_error'])
             plt.plot(history.history['val_root_mean_squared_error'])
@@ -396,11 +339,7 @@ class cfb_regressor():
                                         )
     
             grid_search_xgb.fit(self.x_train,self.y_train)
-<<<<<<< HEAD
         print('Removed features (>=0.8 correlation): ', self.drop_cols)
-=======
-        print('Removed features (>=0.85 correlation): ', self.drop_cols)
->>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
         if isExists == False:
             print('GradientBoostingRegressor - best params: ',search_Grad.best_params_)
             print('RandomForestRegressor - best params: ',search_rand.best_params_)
@@ -480,10 +419,7 @@ class cfb_regressor():
                            'XGB': XGB_err,
                            'Keras': keras_err,
                            }
-<<<<<<< HEAD
             print('====================================')
-=======
->>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
             model_name_rmse = min(dict_models, key=dict_models.get)
             print(f'Model with the lowest RMSE: {model_name_rmse}')
             print('====================================')
