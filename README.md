@@ -27,7 +27,7 @@ LogisticRegression - best params: {'C': 1.5, 'max_iter': 800, 'penalty': 'l2', '
 MLPClassifier - best params:  {'learning_rate': 'invscaling', 'learning_rate_init': 0.004, 'max_iter': 700, 'solver': 'lbfgs'}
 KNeighborsClassifier - best params:  {'algorithm': 'auto', 'n_neighbors': 100, 'p': 1, 'weights': 'distance'}
 XGBBoost Classifier - best params: {'learning_rate': 0.1, 'max_depth': 4, 'n_estimators': 180}
-<<<<<<< HEAD
+
 # Classification accuracy
 =======
 
@@ -78,6 +78,9 @@ check the amount of wins and losses are in the training label data (should be al
 
 ### Feature Importances Regression
 ![](https://github.com/bszek213/college_football_machine_learning/blob/master/Regression/FeatureImportance.png)
+
+### Keras Classification Epochs
+![](https://github.com/bszek213/college_football_machine_learning/blob/master/Classification/keras_model_acc.png)
 
 ### Keras Regression Epochs
 ![](https://github.com/bszek213/college_football_machine_learning/blob/master/Regression/keras_model_regression.png)
