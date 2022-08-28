@@ -16,11 +16,9 @@ python cfb_ml.py
 ```bash
 Removed features (>=0.75 correlation):  ['rush_yds_per_att', 'first_down_pass', 'first_down_rush', 'penalty_yds', 'pass_int']
 
-<<<<<<< HEAD
 # Best hyperparameters - classification
 =======
 # Best hyperparameters
->>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
 GradientBoostingClassifier - best params:  {'criterion': 'friedman_mse', 'learning_rate': 0.30000000000000004, 'loss': 'log_loss', 'max_depth': 2, 'max_features': 'log2', 'n_estimators': 300}
 RandomForestClassifier - best params:  {'criterion': 'gini', 'max_depth': 4, 'max_features': 'log2', 'n_estimators': 300}
 DecisionTreeClassifier - best params:  {'criterion': 'gini', 'max_depth': 4, 'max_features': 'sqrt', 'splitter': 'best'}
@@ -33,7 +31,6 @@ XGBBoost Classifier - best params: {'learning_rate': 0.1, 'max_depth': 4, 'n_est
 # Classification accuracy
 =======
 
->>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
 GradientBoostingClassifier accuracy 0.8042639593908629
 RandomForestClassifier accuracy 0.7835532994923858
 DecisionTreeClassifier accuracy 0.743756345177665
@@ -44,7 +41,7 @@ KNeighborsClassifier accuracy 0.7474111675126903
 XGBClassifier accuracy 0.8048730964467005
 KerasClassifier: test loss, test acc: [0.6931477785110474, 0.5005075931549072]
 #Keras hyperparams: optimizer='SGD' or 'Adam,loss='binary_crossentropy'
-<<<<<<< HEAD
+
 #Regression explained variance - R^2
 GradientBoostingRegressor accuracy 0.8699625600882974
 RandomForestRegressor accuracy 0.9457682994612451
@@ -67,8 +64,6 @@ XGBRegressor rmse 4.717858317038032
 KerasRegression rmse  4.704714853031657
 =======
 
->>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
-
 check the amount of wins and losses are in the training label data (should be almost equal):
 1    12191
 0    11005
@@ -77,17 +72,12 @@ check the amount of wins and losses are in the training label data (should be al
 ### Correlation Matrix
 ![](https://github.com/bszek213/college_football_machine_learning/blob/master/correlations.png)
 
-<<<<<<< HEAD
+
 ### Feature Importances Classification
-![](https://github.com/bszek213/college_football_machine_learning/blob/master/FeatureImportance.png)
+![](https://github.com/bszek213/college_football_machine_learning/blob/master/Classification/FeatureImportance.png)
 
 ### Feature Importances Regression
-![](https://github.com/bszek213/college_football_machine_learning/blob/regression/Regression/FeatureImportance.png)
+![](https://github.com/bszek213/college_football_machine_learning/blob/master/Regression/FeatureImportance.png)
 
-=======
-### Feature Importances
-![](https://github.com/bszek213/college_football_machine_learning/blob/master/FeatureImportance.png)
-
->>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
