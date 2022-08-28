@@ -12,7 +12,10 @@ build/
 develop-eggs/
 dist/
 downloads/
+<<<<<<< HEAD
 saved_models/
+=======
+>>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
 eggs/
 .eggs/
 lib/
@@ -128,4 +131,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+<<<<<<< HEAD
 Regression/saved_models/
+=======
+>>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
