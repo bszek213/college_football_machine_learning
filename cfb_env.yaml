@@ -31,3 +31,4 @@ dependencies:
   - sportsipy
   - tensorflow
   - beautifulsoup4
+  - eli5

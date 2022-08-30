@@ -25,7 +25,7 @@ from sklearn.metrics import r2_score, mean_squared_error #explained_variance_sco
 import time
 from sklearn.model_selection import GridSearchCV
 # from scipy.stats import uniform
-from os import getcwd
+from os import getcwd, mkdir
 from os.path import join, exists
 from scipy import stats
 # from keras.utils import np_utils
@@ -156,7 +156,8 @@ class cfb_regressor():
         isExists = exists(final_dir)
         if isExists == True:
             print('Found yaml - reading in hyperparameters now and fitting')
-            
+            if  exists(join(getcwd(),'saved_models')) == False:
+                mkdir(join(getcwd(),'saved_models'))
             if exists(join(getcwd(),'saved_models', 'Gradclass.sav')) == False:
                 Gradclass = GradientBoostingRegressor(**self.hyper_param_dict['GradientBoosting']).fit(self.x_train,self.y_train)
                 filename = 'Gradclass.sav'

@@ -18,7 +18,6 @@ Removed features (>=0.75 correlation):  ['rush_yds_per_att', 'first_down_pass', 
 
 # Best hyperparameters - classification
 =======
-# Best hyperparameters
 GradientBoostingClassifier - best params:  {'criterion': 'friedman_mse', 'learning_rate': 0.30000000000000004, 'loss': 'log_loss', 'max_depth': 2, 'max_features': 'log2', 'n_estimators': 300}
 RandomForestClassifier - best params:  {'criterion': 'gini', 'max_depth': 4, 'max_features': 'log2', 'n_estimators': 300}
 DecisionTreeClassifier - best params:  {'criterion': 'gini', 'max_depth': 4, 'max_features': 'sqrt', 'splitter': 'best'}
@@ -28,9 +27,19 @@ MLPClassifier - best params:  {'learning_rate': 'invscaling', 'learning_rate_ini
 KNeighborsClassifier - best params:  {'algorithm': 'auto', 'n_neighbors': 100, 'p': 1, 'weights': 'distance'}
 XGBBoost Classifier - best params: {'learning_rate': 0.1, 'max_depth': 4, 'n_estimators': 180}
 
+#Best hyperparameters - regression
+======
+'GradientBoosting': {'criterion': 'squared_error', 'learning_rate': 0.4, 'loss': 'absolute_error', 'max_depth': 1, 'max_features': 'log2', 'n_estimators': 300}
+'DecisionTree':  {'criterion': 'squared_error', 'max_features': 'log2', 'min_samples_split': 4, 'splitter': 'random'}
+'RandomForest': {'criterion': 'absolute_error', 'max_features': 'sqrt', 'min_samples_split': 4, 'n_estimators': 400}
+'Ada':  {'learning_rate': 0.5, 'loss': 'exponential', 'n_estimators': 50}
+'LinearRegression': {'C': 3.5, 'max_iter': 600, 'penalty': 'l2', 'solver': 'lbfgs'}
+'KNearestNeighbor': {'n_neighbors': 25, 'weights':'distance','algorithm': 'brute','p': 2}
+'MLP':  {'activation': 'identity', 'learning_rate': 'invscaling', 'learning_rate_init': 0.002, 'max_iter': 500, 'solver': 'adam'}
+'XGB-boost': {'learning_rate': 0.05, 'max_depth': 6, 'n_estimators': 60}
+
 # Classification accuracy
 =======
-
 GradientBoostingClassifier accuracy 0.8042639593908629
 RandomForestClassifier accuracy 0.7835532994923858
 DecisionTreeClassifier accuracy 0.743756345177665
@@ -43,25 +52,25 @@ KerasClassifier: test loss, test acc: [0.6931477785110474, 0.5005075931549072]
 #Keras hyperparams: optimizer='SGD' or 'Adam,loss='binary_crossentropy'
 
 #Regression explained variance - R^2
-GradientBoostingRegressor accuracy 0.8699625600882974
-RandomForestRegressor accuracy 0.9457682994612451
-DecisionTreeRegressor accuracy 0.894882444151152
-AdaRegressor accuracy 0.7708454126882668
-LinearRegression  accuracy 0.8752138410893351
-MLPRegressor accuracy 0.8679400665500603
-KNeighborsRegressor accuracy 0.8790189462394215
-XGBRegressor accuracy 0.8718155201012868
-KerasRegression accuracy  0.8725287425688582
+GradientBoostingRegressor accuracy 0.859226834130618
+RandomForestRegressor accuracy 0.8529285888408278
+DecisionTreeRegressor accuracy 0.7068270393345268
+AdaRegressor accuracy 0.7697904471677975
+LinearRegression  accuracy 0.8669813533143526
+MLPRegressor accuracy 0.8657863603262631
+KNeighborsRegressor accuracy 0.42648046641011716
+XGBRegressor accuracy 0.8561383119974133
+KerasRegression accuracy  0.8642884018447907
 #Regression RMSE
-GradientBoostingRegressor rmse 4.751835272714411
-RandomForestRegressor rmse 3.0686954044737393
-DecisionTreeRegressor rmse 4.2723300782230496
-AdaRegressor rmse 6.307996582043323
-LinearRegression  rmse 4.654900260950782
-MLPRegressor rmse 4.788645730183061
-KNeighborsRegressor rmse 4.583379870209777
-XGBRegressor rmse 4.717858317038032
-KerasRegression rmse  4.704714853031657
+GradientBoostingRegressor rmse 4.864591076853353
+RandomForestRegressor rmse 4.972222217335514
+DecisionTreeRegressor rmse 7.020181757174267
+AdaRegressor rmse 6.22082623780695
+LinearRegression  rmse 4.7287098031777335
+MLPRegressor rmse 4.749902849189487
+KNeighborsRegressor rmse 9.818847324147438
+XGBRegressor rmse 4.917665401026602
+KerasRegression rmse  4.7763361320934345
 =======
 
 check the amount of wins and losses are in the training label data (should be almost equal):
