@@ -1,6 +1,6 @@
 # College Football Game Predictions
 
-machine learning that predicts the outcome of any Division I college football game. Data are from 2008 - 2021 seasons
+machine learning that predicts the outcome of any Division I college football game. Data are from 2000 - 2022 seasons
 
 ## Installation
 ```bash
