@@ -4,7 +4,7 @@
 College football game regressor
 @author: brianszekely
 """
-from html_parse_cfb import html_to_df_web_scrape
+from html_parse_cfb import html_to_df_web_scrape, cbfd
 # import argparse
 from sportsipy.ncaaf.teams import Teams
 import pandas as pd
@@ -61,7 +61,7 @@ class cfb_regressor():
         isExists = exists(final_dir)
         print(isExists)
         if isExists == False:
-            year_list = [2021,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000]
+            year_list = [2021,2019,2018,2017,2016,2015,2014,2013]#,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000]
             for year in year_list:
                 all_teams = Teams(year)
                 team_names = all_teams.dataframes.abbreviation
@@ -73,7 +73,8 @@ class cfb_regressor():
                     print(f'current team: {abv}, year: {year}')
                     # team = all_teams(abv)
                     str_combine = 'https://www.sports-reference.com/cfb/schools/' + abv.lower() + '/' + str(self.year_store) + '/gamelog/'
-                    df_inst = html_to_df_web_scrape(str_combine)
+                    df_inst = html_to_df_web_scrape(str_combine,abv.lower(),self.year_store)
+                    # df_inst = html_to_df_web_scrape(str_combine)
                     final_list.append(df_inst)
                 output = pd.concat(final_list)
                 output['game_result'] = output['game_result'].str.replace('W','')
