@@ -83,6 +83,8 @@ def html_to_df_web_scrape(URL,team,year):
                     text_data = 'Middle Tennessee'
                 elif text_data == 'San Jose State':
                     text_data = 'San José State'
+                elif text_data == 'Hawaii':
+                    text_data = "Hawai'i"
                 else:
                     text_data = text_data
                 if '-' in text_data:
