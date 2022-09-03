@@ -83,8 +83,18 @@ def html_to_df_web_scrape(URL,team,year):
                     text_data = 'Middle Tennessee'
                 elif text_data == 'San Jose State':
                     text_data = 'San José State'
-                elif text_data == 'Hawaii':
+                elif text_data == 'Hawaii': 
                     text_data = "Hawai'i"
+                elif text_data == 'St. Francis (PA)':
+                    text_data = 'St Francis (PA)'
+                elif text_data == 'Long Island':
+                    text_data = 'Long Island University' 
+                elif text_data == 'Grambling State':
+                    text_data = 'Grambling'
+                elif text_data == 'Virginia Military Institute': 
+                    text_data = 'VMI'
+                elif text_data == 'Nicholls State': 
+                    text_data = 'Nicholls'
                 else:
                     text_data = text_data
                 if '-' in text_data:
@@ -107,6 +117,12 @@ def html_to_df_web_scrape(URL,team,year):
                     team = 'BYU'
                 if team == 'central florida':
                     team = 'UCF'
+                if team == 'hawaii':
+                    team = "Hawai'i"
+                if team == 'louisiana lafayette':
+                    team = "louisiana"
+                if team == 'louisiana state':
+                    team = "LSU"
                 if '*' in text_data:
                     text_data = text_data.replace('*','')
                 print('opp:',text_data)
