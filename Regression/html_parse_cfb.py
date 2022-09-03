@@ -95,6 +95,8 @@ def html_to_df_web_scrape(URL,team,year):
                     text_data = 'VMI'
                 elif text_data == 'Nicholls State': 
                     text_data = 'Nicholls'
+                elif text_data == 'McNeese State': 
+                    text_data = 'McNeese'
                 else:
                     text_data = text_data
                 if '-' in text_data:
