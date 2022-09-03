@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from pandas import DataFrame
 import cfbd
 from numpy import nan
+from time import sleep
 # from cfbd.rest import ApiException
 def html_to_df_web_scrape(URL,team,year):
     configuration = cfbd.Configuration()
@@ -97,6 +98,8 @@ def html_to_df_web_scrape(URL,team,year):
                     text_data = 'Nicholls'
                 elif text_data == 'McNeese State': 
                     text_data = 'McNeese'
+                elif text_data == 'Central Connecticut State': 
+                    text_data = 'Central Connecticut'
                 else:
                     text_data = text_data
                 if '-' in text_data:
@@ -125,6 +128,34 @@ def html_to_df_web_scrape(URL,team,year):
                     team = "louisiana"
                 if team == 'louisiana state':
                     team = "LSU"
+                if team == 'massachusetts':
+                    team = "Umass"
+                if team == 'southern methodist':
+                    team = "SMU"
+                if team == 'texas christian':
+                    team = "TCU" 
+                if team == 'texas san antonio':
+                    team = "UTSA"
+                if team == 'texas el paso':
+                    team = "UTEP"
+                if team == 'nevada las vegas':
+                    team = "UNLV"
+                if team == 'southern california':
+                    team = "USA"
+                if team == 'miami oh':
+                    team = "miami (oh)"
+                if team == 'miami fl':
+                    team = "Miami"
+                if team == 'texas am':
+                    team = "texas a&m"
+                if team == 'middle tennessee state':
+                    team = "middle tennessee"
+                if team == 'mississippi':
+                    team = "ole miss"
+                if team == 'north carolina state':
+                    team = "nc state"
+                if team == 'san jose state':
+                    team = 'San José State'
                 if '*' in text_data:
                     text_data = text_data.replace('*','')
                 print('opp:',text_data)
@@ -149,7 +180,14 @@ def html_to_df_web_scrape(URL,team,year):
                                                           home=text_data, away=team,  #add a if statement here to say if null switch home and away
                                                           )
                 print(api_response)
-                api_response_2 = api_game.get_advanced_box_score(api_response[0].id)
+                while True:
+                    try:
+                        api_response_2 = api_game.get_advanced_box_score(api_response[0].id)
+                        break
+                    except:
+                        print('Reason: Internal Server Error, retry in 10 seconds')
+                        sleep(10)
+                    
                 if api_response_2.teams['havoc']:
                     if api_response_2.teams['havoc'][0]['team'].capitalize() == team.capitalize():
                         havoc.append(api_response_2.teams['havoc'][0]['total'])
