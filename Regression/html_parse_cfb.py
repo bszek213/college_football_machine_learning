@@ -19,8 +19,14 @@ def html_to_df_web_scrape(URL,team,year):
     api_instance = cfbd.GamesApi(cfbd.ApiClient(configuration))
     api_game = cfbd.GamesApi(cfbd.ApiClient(configuration))
     # URL EXAMPLE: URL = "https://www.sports-reference.com/cfb/schools/georgia/2021/gamelog/"
-    page = requests.get(URL)
-    soup = BeautifulSoup(page.content, "html.parser")
+    while True:
+        try:
+            page = requests.get(URL)
+            soup = BeautifulSoup(page.content, "html.parser")
+            break
+        except:
+            print('HTTPSConnectionPool(host="www.sports-reference.com", port=443): Max retries exceeded. Retry in 10 seconds')
+            sleep(10)
     table = soup.find(id="div_offense")
     tbody = table.find('tbody')
     tr_body = tbody.find_all('tr')
@@ -52,8 +58,8 @@ def html_to_df_web_scrape(URL,team,year):
                     text_data = td.get_text().replace('*','')
                 else:
                     text_data = td.get_text()
-                print('opp:',text_data)
-                print('team:',team)
+                # print('opp:',text_data)
+                # print('team:',team)
                 if text_data == 'Miami (FL)':
                     text_data = 'Miami'
                 elif text_data == 'Mississippi':
@@ -102,6 +108,10 @@ def html_to_df_web_scrape(URL,team,year):
                     text_data = 'Central Connecticut'
                 elif text_data == 'Prairie View A&M': 
                     text_data = 'Prairie View'
+                elif text_data == 'California-Davis': 
+                    text_data = 'UC Davis'
+                elif text_data == 'Tennessee-Martin': 
+                    text_data = 'UT Martin'
                 else:
                     text_data = text_data
                 if '-' in text_data:
@@ -187,7 +197,7 @@ def html_to_df_web_scrape(URL,team,year):
                                                                   
                                                                   home=text_data, away=team,  #add a if statement here to say if null switch home and away
                                                                   )
-                        print(api_response)
+                        # print(api_response)
                         break
                     except:
                         print('Reason: Unauthorized, retry in 10 seconds')
@@ -201,18 +211,18 @@ def html_to_df_web_scrape(URL,team,year):
                         sleep(10)
                     
                 if api_response_2.teams['havoc']:
-                    print('=========================================')
-                    temp1 = api_response_2.teams['havoc'][0]['team'].capitalize()
-                    temp2 = api_response_2.teams['havoc'][1]['team'].capitalize()
-                    print(f'{temp1} == {team.capitalize()}')
-                    print(f'{temp2} == {team.capitalize()}')
+                    # print('=========================================')
+                    # temp1 = api_response_2.teams['havoc'][0]['team'].capitalize()
+                    # temp2 = api_response_2.teams['havoc'][1]['team'].capitalize()
+                    # print(f'{temp1} == {team.capitalize()}')
+                    # print(f'{temp2} == {team.capitalize()}')
                     if api_response_2.teams['havoc'][0]['team'].capitalize() == team.capitalize():
                         havoc.append(api_response_2.teams['havoc'][0]['total'])
-                        print(f'{temp1} == {team.capitalize()}: True')
+                        # print(f'{temp1} == {team.capitalize()}: True')
                     elif api_response_2.teams['havoc'][1]['team'].capitalize() == team.capitalize():
                         havoc.append(api_response_2.teams['havoc'][1]['total'])
-                        print(f'{temp2} == {team.capitalize()} True')
-                    print('=========================================')
+                    #     print(f'{temp2} == {team.capitalize()} True')
+                    # print('=========================================')
                     # print('=========================================')
                     # print(api_response_2.teams['havoc'][0]['total'])
                     # print(api_response_2.teams['havoc'][1]['total'])
