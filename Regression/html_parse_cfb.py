@@ -100,6 +100,8 @@ def html_to_df_web_scrape(URL,team,year):
                     text_data = 'McNeese'
                 elif text_data == 'Central Connecticut State': 
                     text_data = 'Central Connecticut'
+                elif text_data == 'Prairie View A&M': 
+                    text_data = 'Prairie View'
                 else:
                     text_data = text_data
                 if '-' in text_data:
@@ -141,7 +143,7 @@ def html_to_df_web_scrape(URL,team,year):
                 if team == 'nevada las vegas':
                     team = "UNLV"
                 if team == 'southern california':
-                    team = "USA"
+                    team = "USC"
                 if team == 'miami oh':
                     team = "miami (oh)"
                 if team == 'miami fl':
@@ -154,32 +156,42 @@ def html_to_df_web_scrape(URL,team,year):
                     team = "ole miss"
                 if team == 'north carolina state':
                     team = "nc state"
-                if team == 'san jose state':
+                if team == 'san jose state': 
                     team = 'San José State'
+                if team == 'texas-san-antonio':
+                    team = 'UT San Antonio'
+                if team == 'UTSA':
+                    team = 'UT San Antonio'
                 if '*' in text_data:
                     text_data = text_data.replace('*','')
                 print('opp:',text_data)
                 print('team:',team)
-                api_response = api_instance.get_games(year, season_type='regular',
-                                                      
-                                                      home=text_data, away=team,  #add a if statement here to say if null switch home and away
-                                                      )
-                if not api_response:
-                    api_response = api_instance.get_games(year, season_type='regular',
-                                                          
-                                                          home=team, away=text_data,  #add a if statement here to say if null switch home and away
-                                                          )
-                if not api_response:
-                    api_response = api_instance.get_games(year, season_type='postseason',
-                                                          
-                                                          home=team, away=text_data,  #add a if statement here to say if null switch home and away
-                                                          )
-                if not api_response:
-                    api_response = api_instance.get_games(year, season_type='postseason',
-                                                          
-                                                          home=text_data, away=team,  #add a if statement here to say if null switch home and away
-                                                          )
-                print(api_response)
+                while True:
+                    try:
+                        api_response = api_instance.get_games(year, season_type='regular',
+                                                              
+                                                              home=text_data, away=team,  #add a if statement here to say if null switch home and away
+                                                              )
+                        if not api_response:
+                            api_response = api_instance.get_games(year, season_type='regular',
+                                                                  
+                                                                  home=team, away=text_data,  #add a if statement here to say if null switch home and away
+                                                                  )
+                        if not api_response:
+                            api_response = api_instance.get_games(year, season_type='postseason',
+                                                                  
+                                                                  home=team, away=text_data,  #add a if statement here to say if null switch home and away
+                                                                  )
+                        if not api_response:
+                            api_response = api_instance.get_games(year, season_type='postseason',
+                                                                  
+                                                                  home=text_data, away=team,  #add a if statement here to say if null switch home and away
+                                                                  )
+                        print(api_response)
+                        break
+                    except:
+                        print('Reason: Unauthorized, retry in 10 seconds')
+                        sleep(10)
                 while True:
                     try:
                         api_response_2 = api_game.get_advanced_box_score(api_response[0].id)
@@ -189,14 +201,22 @@ def html_to_df_web_scrape(URL,team,year):
                         sleep(10)
                     
                 if api_response_2.teams['havoc']:
+                    print('=========================================')
+                    temp1 = api_response_2.teams['havoc'][0]['team'].capitalize()
+                    temp2 = api_response_2.teams['havoc'][1]['team'].capitalize()
+                    print(f'{temp1} == {team.capitalize()}')
+                    print(f'{temp2} == {team.capitalize()}')
                     if api_response_2.teams['havoc'][0]['team'].capitalize() == team.capitalize():
                         havoc.append(api_response_2.teams['havoc'][0]['total'])
-                    else:
+                        print(f'{temp1} == {team.capitalize()}: True')
+                    elif api_response_2.teams['havoc'][1]['team'].capitalize() == team.capitalize():
                         havoc.append(api_response_2.teams['havoc'][1]['total'])
+                        print(f'{temp2} == {team.capitalize()} True')
                     print('=========================================')
-                    print(api_response_2.teams['havoc'][0]['total'])
-                    print(api_response_2.teams['havoc'][1]['total'])
-                    print('=========================================')
+                    # print('=========================================')
+                    # print(api_response_2.teams['havoc'][0]['total'])
+                    # print(api_response_2.teams['havoc'][1]['total'])
+                    # print('=========================================')
                 else:
                     havoc.append(nan)
             if td.get('data-stat') == "game_result":
