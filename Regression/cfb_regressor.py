@@ -159,6 +159,7 @@ class cfb_regressor():
         g=sns.heatmap(corr_matrix[top_corr_features],annot=True,cmap="RdYlGn")
         plt.savefig('correlations.png')
         plt.close()
+
     def prob_plots(self,col_name):
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
@@ -256,7 +257,7 @@ class cfb_regressor():
             history = model.fit(scaled_train,
                         self.y_train,
                         # callbacks=[es],
-                        epochs=100, # you can set this to a big number!
+                        epochs=50, # you can set this to a big number!
                         batch_size=20,
                         validation_split=0.2,           
                         # validation_data=(self.x_test, self.y_test),
@@ -279,6 +280,7 @@ class cfb_regressor():
             plt.savefig(join(getcwd(),save_name), dpi=200)
             plt.close()
         else:
+            #TODO: maybe add the pickle.dump here to save model during this process
             Gradclass = GradientBoostingRegressor()
             Grad_perm = {
                 'loss' : ['squared_error', 'absolute_error'],
@@ -288,8 +290,8 @@ class cfb_regressor():
                 'max_depth': np.arange(1, 5, 1, dtype=int),
                 'max_features' : [1, 'sqrt', 'log2']
                 }
-            clf = GridSearchCV(Gradclass, Grad_perm, scoring=['neg_mean_absolute_error'],
-                                refit='neg_mean_absolute_error', verbose=4, n_jobs=-1)
+            clf = GridSearchCV(Gradclass, Grad_perm, scoring=['neg_root_mean_squared_error'],
+                                refit='neg_root_mean_squared_error', verbose=4, n_jobs=-1)
             search_Grad = clf.fit(self.x_train,self.y_train)
             RandForclass = RandomForestRegressor()
             Rand_perm = {
@@ -298,8 +300,8 @@ class cfb_regressor():
                 'min_samples_split': np.arange(2, 5, 1, dtype=int),
                 'max_features' : [1, 'sqrt', 'log2']
                 }
-            clf_rand = GridSearchCV(RandForclass, Rand_perm, scoring=['neg_mean_absolute_error'],
-                               refit='neg_mean_absolute_error',verbose=4, n_jobs=-1)
+            clf_rand = GridSearchCV(RandForclass, Rand_perm, scoring=['neg_root_mean_squared_error'],
+                               refit='neg_root_mean_squared_error',verbose=4, n_jobs=-1)
             search_rand = clf_rand.fit(self.x_train,self.y_train)
             DecTreeclass = DecisionTreeRegressor()
             Dec_perm = {
@@ -308,15 +310,15 @@ class cfb_regressor():
                 'min_samples_split': np.arange(2, 5, 1, dtype=int),
                 'max_features' : [1, 'sqrt', 'log2']
                 }
-            clf_dec = GridSearchCV(DecTreeclass, Dec_perm, scoring=['neg_mean_absolute_error'],
-                               refit='neg_mean_absolute_error',verbose=4, n_jobs=-1)
+            clf_dec = GridSearchCV(DecTreeclass, Dec_perm, scoring=['neg_root_mean_squared_error'],
+                               refit='neg_root_mean_squared_error',verbose=4, n_jobs=-1)
             search_dec = clf_dec.fit(self.x_train,self.y_train)
             ada_class = AdaBoostRegressor()
             ada_perm = {'n_estimators': range(50,200,50),
                           'learning_rate': np.arange(.5,2.5,.5,dtype=float),
                           'loss': ['linear','square','exponential']}
-            clf_ada = GridSearchCV(ada_class, ada_perm, scoring=['neg_mean_absolute_error'],
-                                refit='neg_mean_absolute_error', verbose=4, n_jobs=-1)
+            clf_ada = GridSearchCV(ada_class, ada_perm, scoring=['neg_root_mean_squared_error'],
+                                refit='neg_root_mean_squared_error', verbose=4, n_jobs=-1)
             search_ada = clf_ada.fit(self.x_train,self.y_train)
             LinReg = LinearRegression()
             search_Ling = LinReg.fit(self.x_train,self.y_train)
@@ -330,8 +332,8 @@ class cfb_regressor():
                 'max_iter': range(100,1000,200),
                 # 'tol': np.arange(0.001, 0.005, 0.001, dtype=float)
                 }
-            clf_MLP = GridSearchCV(MLPClass, MLP_perm, scoring=['neg_mean_absolute_error'],
-                               refit='neg_mean_absolute_error', verbose=4, n_jobs=-1)
+            clf_MLP = GridSearchCV(MLPClass, MLP_perm, scoring=['neg_root_mean_squared_error'],
+                               refit='neg_root_mean_squared_error', verbose=4, n_jobs=-1)
             search_MLP= clf_MLP.fit(self.x_train,self.y_train)
             KClass = KNeighborsRegressor()
             KClass_perm = {
@@ -340,8 +342,8 @@ class cfb_regressor():
                 'algorithm' : ['auto', 'ball_tree', 'kd_tree', 'brute'],
                 'p' : [1,2]
                 }
-            clf_KClass = GridSearchCV(KClass, KClass_perm, scoring=['neg_mean_absolute_error'],
-                               refit='neg_mean_absolute_error', verbose=4, n_jobs=-1)
+            clf_KClass = GridSearchCV(KClass, KClass_perm, scoring=['neg_root_mean_squared_error'],
+                               refit='neg_root_mean_squared_error', verbose=4, n_jobs=-1)
             search_KClass= clf_KClass.fit(self.x_train,self.y_train)
             estimator = xgb.XGBRegressor(
                     nthread=4,
@@ -355,7 +357,7 @@ class cfb_regressor():
             grid_search_xgb = GridSearchCV(
                                         estimator=estimator,
                                         param_grid=parameters_xgb,
-                                        scoring = 'neg_mean_absolute_error',
+                                        scoring = 'neg_root_mean_squared_error',
                                         n_jobs = -1,
                                         cv = 5,
                                         verbose=4
@@ -472,11 +474,11 @@ class cfb_regressor():
                 if team_1 == 'exit':
                     break
                 team_2 = input('team_2: ')
-                year = input('year: ')
+                year = int(input('year: '))
                 team_1_url = 'https://www.sports-reference.com/cfb/schools/' + team_1.lower() + '/' + str(year) + '/gamelog/'
                 team_2_url = 'https://www.sports-reference.com/cfb/schools/' + team_2.lower() + '/' + str(year) + '/gamelog/'
-                team_1_df = html_to_df_web_scrape(team_1_url)
-                team_2_df = html_to_df_web_scrape(team_2_url)
+                team_1_df = html_to_df_web_scrape(team_1_url,team_1,year)
+                team_2_df = html_to_df_web_scrape(team_2_url,team_2,year)
                 #clean team 1 labels
                 team_1_df['game_result'] = team_1_df['game_result'].str.replace('W','')
                 team_1_df['game_result'] = team_1_df['game_result'].str.replace('L','')
@@ -494,10 +496,17 @@ class cfb_regressor():
                 team_2_df['game_result'] = team_2_df['game_result'].str.replace('-','')
                 final_data_2 = team_2_df.replace(r'^\s*$', np.NaN, regex=True) #replace empty string with NAN
                 
-                if 'Unnamed: 0' in final_data_1.columns:
-                    final_data_1 = final_data_1.drop(columns=['Unnamed: 0'])
-                if 'Unnamed: 0' in final_data_2.columns:
-                    final_data_2 = final_data_2.drop(columns=['Unnamed: 0'])
+                
+                for col in final_data_1.columns:
+                    if 'Unnamed' in col:
+                        final_data_1.drop(columns=col,inplace=True)
+                for col in final_data_2.columns:
+                    if 'Unnamed' in col:
+                        final_data_2.drop(columns=col,inplace=True)
+                # if 'Unnamed: 0' in final_data_1.columns:
+                #     final_data_1 = final_data_1.drop(columns=['Unnamed: 0'])
+                # if 'Unnamed: 0' in final_data_2.columns:
+                #     final_data_2 = final_data_2.drop(columns=['Unnamed: 0'])
                 
                 #drop cols
                 final_data_1.drop(columns=self.drop_cols, inplace=True)
@@ -582,6 +591,5 @@ def main():
     cfb_class.predict_two_teams(model)
     cfb_class.feature_importances(model)
     print("--- %s seconds ---" % (time.time() - start_time))
-
 if __name__ == '__main__':
     main()
