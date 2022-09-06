@@ -41,6 +41,7 @@ from sklearn.inspection import permutation_importance
 from eli5.sklearn import PermutationImportance
 from eli5 import show_weights
 import pickle
+from tqdm import tqdm
 # from time import sleep
 #TODO: Build the keras hyperparam tuner
 # Save models with pickle to avoid refitting time
@@ -56,20 +57,29 @@ class cfb_regressor():
                 self.hyper_param_dict = yaml.load(file, Loader=yaml.FullLoader)
 
     def get_teams(self):
-        final_dir = join(getcwd(), 'all_data_regressor.csv')
-        print(final_dir)
-        isExists = exists(final_dir)
-        print(isExists)
-        if isExists == False:
-            year_list = [2021,2019,2018,2017,2016,2015,2014,2013]#,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000]
+        # final_dir = join(getcwd(), 'all_data_regressor.csv')
+        # isExists = exists(final_dir)
+        year_list_find = []
+        # if isExists == False:
+        year_list = [2021,2019,2018,2017,2016,2015]#,2014,2013,,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000]
+        if exists(join(getcwd(),'year_count.yaml')):
+            with open(join(getcwd(),'year_count.yaml')) as file:
+                year_counts = yaml.load(file, Loader=yaml.FullLoader)
+        else:
+            year_counts = {'year':year_list_find}
+        if year_counts['year']:
+            year_list_check =  year_counts['year']
+            year_list_find = year_counts['year']
+            year_list = [i for i in year_list if i not in year_list_check]
+            print(f'Need data for year: {year_list}')
+        if year_list:
             for year in year_list:
                 all_teams = Teams(year)
                 team_names = all_teams.dataframes.abbreviation
-                team_names = team_names.sort_values()
-                print(team_names)
+                team_names = team_names.sort_values()   
                 final_list = []
                 self.year_store = year
-                for abv in team_names:
+                for abv in tqdm(team_names):    
                     print(f'current team: {abv}, year: {year}')
                     # team = all_teams(abv)
                     str_combine = 'https://www.sports-reference.com/cfb/schools/' + abv.lower() + '/' + str(self.year_store) + '/gamelog/'
@@ -84,22 +94,33 @@ class cfb_regressor():
                 output['game_result'] = output['game_result'].str.split('-').str[0]
                 output['game_result'] = output['game_result'].str.replace('-','')
                 final_data = output.replace(r'^\s*$', np.NaN, regex=True) #replace empty string with NAN
+                if exists(join(getcwd(),'all_data_regressor.csv')):
+                    self.all_data = pd.read_csv(join(getcwd(),'all_data_regressor.csv'))  
                 self.all_data = pd.concat([self.all_data, final_data.dropna()])
-                print('len data: ', len(self.all_data))
-            self.all_data.to_csv('all_data_regresso.csv')
+                if not exists(join(getcwd(),'all_data_regressor.csv')):
+                    self.all_data.to_csv(join(getcwd(),'all_data_regressor.csv'))
+                self.all_data.to_csv(join(getcwd(),'all_data_regressor.csv'))
+                year_list_find.append(year)
+                print(f'year list after loop: {year_list_find}')
+                with open(join(getcwd(),'year_count.yaml'), 'w') as write_file:
+                    yaml.dump(year_counts, write_file)
+                    print(f'writing {year} to yaml file')
         else:
-            self.all_data = pd.read_csv(final_dir)
+            self.all_data = pd.read_csv(join(getcwd(),'all_data_regressor.csv'))
+        print('len data: ', len(self.all_data))
+            
+        # else:
+        #     self.all_data = pd.read_csv(final_dir)
 
     def split(self):
+        for col in self.all_data.columns:
+            if 'Unnamed' in col:
+                self.all_data.drop(columns=col,inplace=True)
         self.y = self.all_data['game_result']
         self.x = self.all_data.drop(columns=['game_result'])
         self.pre_process()
 
-    def pre_process(self):
-        #drop irrelavent column
-        if 'Unnamed: 0' in self.x.columns:
-            self.x = self.x.drop(columns=['Unnamed: 0'])
-        
+    def pre_process(self):        
         # Find features with correlation greater than 0.90
         corr_matrix = np.abs(self.x.astype(float).corr())
         upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool))

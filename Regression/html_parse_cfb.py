@@ -112,6 +112,8 @@ def html_to_df_web_scrape(URL,team,year):
                     text_data = 'UC Davis'
                 elif text_data == 'Tennessee-Martin': 
                     text_data = 'UT Martin'
+                elif text_data == 'Presbyterian': 
+                    text_data = 'Presbyterian College'
                 else:
                     text_data = text_data
                 if '-' in text_data:
@@ -216,11 +218,15 @@ def html_to_df_web_scrape(URL,team,year):
                     # temp2 = api_response_2.teams['havoc'][1]['team'].capitalize()
                     # print(f'{temp1} == {team.capitalize()}')
                     # print(f'{temp2} == {team.capitalize()}')
-                    if api_response_2.teams['havoc'][0]['team'].capitalize() == team.capitalize():
-                        havoc.append(api_response_2.teams['havoc'][0]['total'])
-                        # print(f'{temp1} == {team.capitalize()}: True')
-                    elif api_response_2.teams['havoc'][1]['team'].capitalize() == team.capitalize():
-                        havoc.append(api_response_2.teams['havoc'][1]['total'])
+                    try:
+                        if api_response_2.teams['havoc'][0]['team'].capitalize() == team.capitalize():
+                            havoc.append(api_response_2.teams['havoc'][0]['total'])
+                            # print(f'{temp1} == {team.capitalize()}: True')
+                        elif api_response_2.teams['havoc'][1]['team'].capitalize() == team.capitalize():
+                            havoc.append(api_response_2.teams['havoc'][1]['total'])
+                    except:
+                        print('Key error - team. most liekly the there are no data. return NaN')
+                        havoc.append(nan)
                     #     print(f'{temp2} == {team.capitalize()} True')
                     # print('=========================================')
                     # print('=========================================')
