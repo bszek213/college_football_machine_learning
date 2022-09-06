@@ -52,25 +52,25 @@ KerasClassifier: test loss, test acc: [0.6931477785110474, 0.5005075931549072]
 #Keras hyperparams: optimizer='SGD' or 'Adam,loss='binary_crossentropy'
 
 #Regression explained variance - R^2
-GradientBoostingRegressor accuracy 0.859226834130618
-RandomForestRegressor accuracy 0.8529285888408278
-DecisionTreeRegressor accuracy 0.7068270393345268
-AdaRegressor accuracy 0.7697904471677975
-LinearRegression  accuracy 0.8669813533143526
-MLPRegressor accuracy 0.8657863603262631
-KNeighborsRegressor accuracy 0.42648046641011716
-XGBRegressor accuracy 0.8561383119974133
-KerasRegression accuracy  0.8642884018447907
+GradientBoostingRegressor accuracy 0.8927654050255368
+RandomForestRegressor accuracy 0.9578997743192117
+DecisionTreeRegressor accuracy 0.9097381160900899
+AdaRegressor accuracy 0.8160777451632479
+LinearRegression  accuracy 0.8945162714348158
+MLPRegressor accuracy 0.894301582005098
+KNeighborsRegressor accuracy 0.8807448924240803
+XGBRegressor accuracy 0.8970963716842437
+KerasRegression accuracy  0.8932633781519946
 #Regression RMSE
-GradientBoostingRegressor rmse 4.864591076853353
-RandomForestRegressor rmse 4.972222217335514
-DecisionTreeRegressor rmse 7.020181757174267
-AdaRegressor rmse 6.22082623780695
-LinearRegression  rmse 4.7287098031777335
-MLPRegressor rmse 4.749902849189487
-KNeighborsRegressor rmse 9.818847324147438
-XGBRegressor rmse 4.917665401026602
-KerasRegression rmse  4.7763361320934345
+GradientBoostingRegressor rmse 4.506078814174887
+RandomForestRegressor rmse 2.823407328188002
+DecisionTreeRegressor rmse 4.134124225262138
+AdaRegressor rmse 5.901310515283827
+LinearRegression  rmse 4.469141053280191
+MLPRegressor rmse 4.473686728953927
+KNeighborsRegressor rmse 4.751927651968633
+XGBRegressor rmse 4.414145756777427
+KerasRegression rmse  4.495604035631229
 =======
 
 check the amount of wins and losses are in the training label data (should be almost equal):
