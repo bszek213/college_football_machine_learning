@@ -4,18 +4,18 @@
 College football game regressor
 @author: brianszekely
 """
-from html_parse_cfb import html_to_df_web_scrape, cbfd
+from html_parse_cfb import html_to_df_web_scrape
 # import argparse
 from sportsipy.ncaaf.teams import Teams
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler #,StandardScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.ensemble import GradientBoostingRegressor,RandomForestRegressor
 from sklearn.tree import DecisionTreeRegressor
-# from sklearn.svm import SVC
+from sklearn.svm import SVR
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import LinearRegression
@@ -42,6 +42,8 @@ from eli5.sklearn import PermutationImportance
 from eli5 import show_weights
 import pickle
 from tqdm import tqdm
+# from sklearn import tree
+# from subprocess import call
 # from time import sleep
 #TODO: Build the keras hyperparam tuner
 # Save models with pickle to avoid refitting time
@@ -150,6 +152,9 @@ class cfb_regressor():
 
         #split data into train and test
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x_no_corr, self.y, train_size=0.8)
+        cols = self.x_train.columns.to_list()
+        self.x_train_cols = self.x_train.columns.to_list()
+        self.y_train_cols = self.y_train.name
         for col_name in cols:
             # self.x_train[col_name], _ = stats.boxcox(self.x_train[col_name])
             self.prob_plots(col_name)
@@ -181,7 +186,15 @@ class cfb_regressor():
             print('Found yaml - reading in hyperparameters now and fitting')
             if  exists(join(getcwd(),'saved_models')) == False:
                 mkdir(join(getcwd(),'saved_models'))
+            if exists(join(getcwd(),'saved_models', 'SVM.sav')) == False:
+                filename = 'svm_model.sav'
+                Gradclass = SVR(**self.hyper_param_dict['GradientBoosting']).fit(self.x_train,self.y_train)
+            else:
+                filename = 'svm_model.sav'
+                svm_model = pickle.load(open(join(getcwd(),'saved_models', 'svm_model.sav'), 'rb'))
             if exists(join(getcwd(),'saved_models', 'Gradclass.sav')) == False:
+                filename = 'Gradclass.sav'
+                Gradclass = GradientBoostingRegressor(**self.hyper_param_dict['GradientBoosting']).fit(self.x_train,self.y_train)
                 Gradclass = GradientBoostingRegressor(**self.hyper_param_dict['GradientBoosting']).fit(self.x_train,self.y_train)
                 filename = 'Gradclass.sav'
                 pickle.dump(Gradclass, open(join(getcwd(),'saved_models', 'Gradclass.sav'), 'wb'))
@@ -195,6 +208,15 @@ class cfb_regressor():
             else:
                 filename = 'RandForclass.sav'
                 RandForclass = pickle.load(open(join(getcwd(),'saved_models', 'RandForclass.sav'), 'rb'))
+                #Save tree
+                # estimator = RandForclass.estimators_[5]
+                # plt.figure(figsize=(25,25))
+                # _ = tree.plot_tree(estimator, feature_names=self.x_train_cols,
+                #                    class_names = self.y_train_cols,
+                #                    filled=True)
+                # plt.tight_layout()
+                # plt.savefig('plottree_randomForest.svg')
+                # plt.close()
             if exists(join(getcwd(),'saved_models', 'ada_class.sav')) == False:
                 ada_class = AdaBoostRegressor(**self.hyper_param_dict['Ada']).fit(self.x_train,self.y_train)
                 filename = 'ada_class.sav'
@@ -240,14 +262,17 @@ class cfb_regressor():
             #Keras classifier 
             model = Sequential()
             # model.add(LSTM(12))
-            scaler = MinMaxScaler(feature_range=(0, 1))
+            scaler = StandardScaler()
+            # scaler = MinMaxScaler()(feature_range=(0, 1))
             scaled_data = scaler.fit_transform(self.x_train)
             scaled_train = pd.DataFrame(scaled_data, columns = self.x_train.columns)
-            model.add(Dense(12, input_shape=(scaled_train.shape[1],), activation="linear"))#input shape - (features,)
+            scaled_data_test = scaler.fit_transform(self.x_test)
+            scaled_test = pd.DataFrame(scaled_data_test, columns = self.x_test.columns)
+            model.add(Dense(10, input_shape=(scaled_train.shape[1],), activation="linear"))#input shape - (features,)
             # model.add(Dropout(0.3))
-            model.add(Dense(12, activation='relu'))
-            model.add(Dense(8, activation='linear'))
-            model.add(Dense(4, activation='relu'))
+            model.add(Dense(8, activation='relu'))
+            model.add(Dense(6, activation='linear'))
+            model.add(Dense(4, activation='linear'))
             model.add(Dense(1, activation='linear'))
             model.summary() 
             #compile 
@@ -257,11 +282,12 @@ class cfb_regressor():
             history = model.fit(scaled_train,
                         self.y_train,
                         # callbacks=[es],
-                        epochs=50, # you can set this to a big number!
+                        epochs=500, # you can set this to a big number!
                         batch_size=20,
-                        validation_split=0.2,           
-                        # validation_data=(self.x_test, self.y_test),
+                        # validation_split=0.2,           
+                        validation_data=(scaled_test, self.y_test),
                         shuffle=True,
+                        workers=8, #change this to be the num cores
                         verbose=1)
             # keras_acc = history.history['accuracy']
             # pred_train = history.predict(self.x_test) #will need this in the future when I want to look at one team vs. another
@@ -281,6 +307,18 @@ class cfb_regressor():
             plt.close()
         else:
             #TODO: maybe add the pickle.dump here to save model during this process
+            svm_model = SVR()
+            svm_perm = {
+                'kernel' : ['linear', 'rbf'],
+                'degree': np.arange(1, 5, 1, dtype=float),
+                'gamma': ['scale', 'auto'],
+                'tol': np.arange(0.001, 0.01, 0.003, dtype=float),
+                'C': np.arange(1, 3, 0.5, dtype=float)
+                }
+            clf = GridSearchCV(svm_model, svm_perm, scoring=['neg_root_mean_squared_error'],
+                                refit='neg_root_mean_squared_error', verbose=4, n_jobs=-1)
+            search_svm = clf.fit(self.x_train,self.y_train)
+            
             Gradclass = GradientBoostingRegressor()
             Grad_perm = {
                 'loss' : ['squared_error', 'absolute_error'],
@@ -369,6 +407,7 @@ class cfb_regressor():
             print('GradientBoostingRegressor - best params: ',search_Grad.best_params_)
             print('RandomForestRegressor - best params: ',search_rand.best_params_)
             print('DecisionTreeRegressor- best params: ',search_dec.best_params_)
+            print('SVM- best params: ',search_svm.best_params_)
             # print('SVC - best params: ',search_SVC.best_params_)
             print('AdaRegressor - best params: ',search_ada.best_params_)
             # print('LinearRegression- best params:',search_Ling.best_params_)
@@ -379,6 +418,7 @@ class cfb_regressor():
         else:
             #r2_score
             Gradclass_err = r2_score(self.y_test, Gradclass.predict(self.x_test))
+            svm_err = r2_score(self.y_test, svm_model.predict(self.x_test))
             RandForclass_err = r2_score(self.y_test, RandForclass.predict(self.x_test))
             DecTreeclass_err = r2_score(self.y_test, DecTreeclass.predict(self.x_test))
             # SVCclass_err = accuracy_score(self.y_test, search_SVC.predict(self.x_test))
@@ -389,9 +429,9 @@ class cfb_regressor():
             XGB_err = r2_score(self.y_test, xgb_class.predict(self.x_test))
             keras_err = r2_score(self.y_test, keras_y_predict)
             print('GradientBoostingRegressor accuracy',Gradclass_err)
+            print('SVM accuracy',svm_err)
             print('RandomForestRegressor accuracy',RandForclass_err)
             print('DecisionTreeRegressor accuracy',DecTreeclass_err)
-            # print('SVC accuracy',SVCclass_err)
             print('AdaRegressor accuracy',adaclass_err)
             print('LinearRegression  accuracy',LinReg_err)
             print('MLPRegressor accuracy',MLPClass_err)
@@ -408,6 +448,7 @@ class cfb_regressor():
                            'Kneighbor': KClass_err,
                            'XGB': XGB_err,
                            'Keras': keras_err,
+                           'SVM': svm_err
                            }
             model_name_r2 = max(dict_models, key=dict_models.get)
             print(f'Model with the highest r2: {model_name_r2}')
@@ -416,7 +457,7 @@ class cfb_regressor():
             Gradclass_err = np.sqrt(mean_squared_error(self.y_test, Gradclass.predict(self.x_test)))
             RandForclass_err = np.sqrt(mean_squared_error(self.y_test, RandForclass.predict(self.x_test)))
             DecTreeclass_err = np.sqrt(mean_squared_error(self.y_test, DecTreeclass.predict(self.x_test)))
-            # SVCclass_err = accuracy_score(self.y_test, search_SVC.predict(self.x_test))
+            SVMclass_err = np.sqrt(mean_squared_error(self.y_test, svm_model.predict(self.x_test)))
             adaclass_err = np.sqrt(mean_squared_error(self.y_test, ada_class.predict(self.x_test)))
             LinReg_err = np.sqrt(mean_squared_error(self.y_test, LinReg.predict(self.x_test)))
             MLPClass_err = np.sqrt(mean_squared_error(self.y_test, MLPClass.predict(self.x_test)))
@@ -425,6 +466,7 @@ class cfb_regressor():
             keras_err = np.sqrt(mean_squared_error(self.y_test, keras_y_predict))
             # print(f'Keras best params: {keras_grid.best_score_}, {keras_grid.best_params_}')
             print('GradientBoostingRegressor rmse',Gradclass_err)
+            print('SVM rmse',SVMclass_err)
             print('RandomForestRegressor rmse',RandForclass_err)
             print('DecisionTreeRegressor rmse',DecTreeclass_err)
             # print('SVC accuracy',SVCclass_err)
@@ -443,6 +485,7 @@ class cfb_regressor():
                            'Kneighbor': KClass_err,
                            'XGB': XGB_err,
                            'Keras': keras_err,
+                           'SVM': SVMclass_err
                            }
             print('====================================')
             model_name_rmse = min(dict_models, key=dict_models.get)
@@ -466,6 +509,8 @@ class cfb_regressor():
                 return xgb_class
             elif model_name_r2 == 'Keras':
                 return model
+            elif model_name_r2 == 'SVM':
+                return svm_model
 
     def predict_two_teams(self,model):
         while True:
