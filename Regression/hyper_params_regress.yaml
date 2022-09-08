@@ -1,7 +1,8 @@
-'GradientBoosting': {'criterion': 'squared_error', 'learning_rate': 0.4, 'loss': 'squared_error', 'max_depth': 1, 'max_features': 'sqrt', 'n_estimators': 300}
-'DecisionTree':  {'criterion': 'squared_error', 'max_features': 'log2', 'min_samples_split': 4, 'splitter': 'best'}
-'RandomForest': {'criterion': 'absolute_error', 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 400}
+'GradientBoosting': {'criterion': 'friedman_mse', 'learning_rate': 0.4, 'loss': 'squared_error', 'max_depth': 1, 'max_features': 'sqrt', 'n_estimators': 400}
+'DecisionTree':  {'criterion': 'squared_error', 'max_features': 'log2', 'min_samples_split': 4, 'splitter': 'random'}
+'SVM':  {'C': 2.5, 'degree': 1.0, 'gamma': 'scale', 'kernel': 'linear', 'tol': 0.001}
+'RandomForest': {'criterion': 'squared_error', 'max_features': 'sqrt', 'min_samples_split': 3, 'n_estimators': 300}
 'Ada':  {'learning_rate': 0.5, 'loss': 'exponential', 'n_estimators': 50}
-'KNearestNeighbor': {'n_neighbors': 25, 'weights':'distance','algorithm': 'brute','p': 2}
+'KNearestNeighbor': {'algorithm': 'auto', 'n_neighbors': 30, 'p': 1, 'weights': 'distance'}
 'MLP':   {'activation': 'identity', 'learning_rate': 'invscaling', 'learning_rate_init': 0.002, 'max_iter': 900, 'solver': 'lbfgs'}
 'XGB-boost': {'learning_rate': 0.1, 'max_depth': 2, 'n_estimators': 180}

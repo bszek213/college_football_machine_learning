@@ -188,15 +188,14 @@ class cfb_regressor():
                 mkdir(join(getcwd(),'saved_models'))
             if exists(join(getcwd(),'saved_models', 'SVM.sav')) == False:
                 filename = 'svm_model.sav'
-                Gradclass = SVR(**self.hyper_param_dict['GradientBoosting']).fit(self.x_train,self.y_train)
+                svm_model = SVR(**self.hyper_param_dict['SVM']).fit(self.x_train,self.y_train)
+                pickle.dump(svm_model, open(join(getcwd(),'saved_models', 'svm_model.sav'), 'wb'))
             else:
                 filename = 'svm_model.sav'
                 svm_model = pickle.load(open(join(getcwd(),'saved_models', 'svm_model.sav'), 'rb'))
             if exists(join(getcwd(),'saved_models', 'Gradclass.sav')) == False:
                 filename = 'Gradclass.sav'
                 Gradclass = GradientBoostingRegressor(**self.hyper_param_dict['GradientBoosting']).fit(self.x_train,self.y_train)
-                Gradclass = GradientBoostingRegressor(**self.hyper_param_dict['GradientBoosting']).fit(self.x_train,self.y_train)
-                filename = 'Gradclass.sav'
                 pickle.dump(Gradclass, open(join(getcwd(),'saved_models', 'Gradclass.sav'), 'wb'))
             else:
                 filename = 'Gradclass.sav'

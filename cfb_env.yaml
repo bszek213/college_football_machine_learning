@@ -32,3 +32,4 @@ dependencies:
   - tensorflow
   - beautifulsoup4
   - eli5
+  - cfbd
