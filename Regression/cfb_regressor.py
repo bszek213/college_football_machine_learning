@@ -44,7 +44,7 @@ import pickle
 from tqdm import tqdm
 # from sklearn import tree
 # from subprocess import call
-from time import sleep
+# from time import sleep
 #TODO: Build the keras hyperparam tuner
 # Save models with pickle to avoid refitting time
 class cfb_regressor():
@@ -281,7 +281,7 @@ class cfb_regressor():
             history = model.fit(scaled_train,
                         self.y_train,
                         # callbacks=[es],
-                        epochs=100, # you can set this to a big number!
+                        epochs=50, # you can set this to a big number!
                         batch_size=20,
                         # validation_split=0.2,           
                         validation_data=(scaled_test, self.y_test),
@@ -534,8 +534,6 @@ class cfb_regressor():
                 #concatenate 2021 and 2022
                 team_1_df = pd.concat([team_1_df2021, team_1_df2022])
                 team_2_df = pd.concat([team_2_df2021, team_2_df2022])
-                print(team_1_df)
-                sleep(100)
                 #clean team 1 labels
                 team_1_df['game_result'] = team_1_df['game_result'].str.replace('W','')
                 team_1_df['game_result'] = team_1_df['game_result'].str.replace('L','')
@@ -571,50 +569,69 @@ class cfb_regressor():
                 final_data_2.drop(columns=['game_result'], inplace=True)
                 
                 #create data for prediction
-                df_features_1 = final_data_1.median(axis=0,skipna=True).to_frame().T
-                df_features_2 = final_data_2.median(axis=0,skipna=True).to_frame().T
+                df_features_1 = final_data_1.dropna().median(axis=0,skipna=True).to_frame().T
+                df_features_2 = final_data_2.dropna().median(axis=0,skipna=True).to_frame().T
                 team_1_total = 0
                 team_2_total = 0
-                team_1_data_all = model.predict(final_data_1.median(axis=0,skipna=True).to_frame().T)
-                team_2_data_all = model.predict(final_data_2.median(axis=0,skipna=True).to_frame().T)
-                if team_1_data_all > team_2_data_all:
-                    team_1_total += 1
-                else:
-                    team_2_total += 1
-                team_1_data_last = model.predict(final_data_1.iloc[-1:].median(axis=0,skipna=True).to_frame().T)
-                team_2_data_last = model.predict(final_data_2.iloc[-1:].median(axis=0,skipna=True).to_frame().T)
-                if team_1_data_last > team_2_data_last:
-                    team_1_total += 1
-                else:
-                    team_2_total += 1
-                team_1_data_last2 = model.predict(final_data_1.iloc[-2:].median(axis=0,skipna=True).to_frame().T)
-                team_2_data_last2 = model.predict(final_data_2.iloc[-2:].median(axis=0,skipna=True).to_frame().T)
-                if team_1_data_last2 > team_2_data_last2:
-                    team_1_total += 1
-                else:
-                    team_2_total += 1
-                team_1_data_last5 = model.predict(final_data_1.iloc[-5:].median(axis=0,skipna=True).to_frame().T)
-                team_2_data_last5 = model.predict(final_data_2.iloc[-5:].median(axis=0,skipna=True).to_frame().T)
-                if team_1_data_last5 > team_2_data_last5:
-                    team_1_total += 1
-                else:
-                    team_2_total += 1
-                print('====================================')
-                print(f'Score prediction for {team_1} across season: {team_1_data_all}')
-                print(f'Score prediction for {team_2} across season: {team_2_data_all}')
-                print(f'Score prediction for {team_1} last game: {team_1_data_last}')
-                print(f'Score prediction for {team_2} last game: {team_2_data_last}')
-                print(f'Score prediction for {team_1} last 2 game: {team_1_data_last2}')
-                print(f'Score prediction for {team_2} last 2 game: {team_2_data_last2}')
-                # print(f'Score prediction for {team_1} last 3 game: {model.predict(final_data_1.iloc[-3:].median(axis=0,skipna=True).to_frame().T)}')
-                # print(f'Score prediction for {team_2} last 3 game: {model.predict(final_data_2.iloc[-3:].median(axis=0,skipna=True).to_frame().T)}')
-                # print(f'Score prediction for {team_1} last 4 game: {model.predict(final_data_1.iloc[-4:].median(axis=0,skipna=True).to_frame().T)}')
-                # print(f'Score prediction for {team_2} last 4 game: {model.predict(final_data_2.iloc[-4:].median(axis=0,skipna=True).to_frame().T)}')
-                print(f'Score prediction for {team_1} last 5 game: {team_1_data_last5}')
-                print(f'Score prediction for {team_2} last 5 game: {team_2_data_last5}')
+                print('============================================================')
+                data1 = final_data_1.dropna().median(axis=0,skipna=True).to_frame().T
+                data2 = final_data_2.dropna().median(axis=0,skipna=True).to_frame().T
+                if ~data1.empty and ~data2.empty:
+                    team_1_data_all = model.predict(data1)
+                    team_2_data_all = model.predict(data2)
+                    if team_1_data_all > team_2_data_all:
+                        team_1_total += 1
+                    else:
+                        team_2_total += 1
+                    print(f'Score prediction for {team_1} across 2021 and 2022 season: {team_1_data_all}')
+                    print(f'Score prediction for {team_2} across 2021 and 2022 season: {team_2_data_all}')
+                data1 = final_data_1.iloc[-1:].dropna().median(axis=0,skipna=True).to_frame().T
+                data2 = final_data_1.iloc[-1:].dropna().median(axis=0,skipna=True).to_frame().T
+                if ~data1.empty and ~data2.empty:
+                    team_1_data_last = model.predict(data1)
+                    team_2_data_last = model.predict(data2)
+                    if team_1_data_last > team_2_data_last:
+                        team_1_total += 1
+                    else:
+                        team_2_total += 1
+                    print(f'Score prediction for {team_1} last game: {team_1_data_last}')
+                    print(f'Score prediction for {team_2} last game: {team_2_data_last}')
+                data1 = final_data_1.iloc[-2:].dropna().median(axis=0,skipna=True).to_frame().T
+                data2 = final_data_2.iloc[-2:].dropna().median(axis=0,skipna=True).to_frame().T
+                if ~data1.empty and ~data2.empty:
+                    team_1_data_last2 = model.predict(data1)
+                    team_2_data_last2 = model.predict(data2)
+                    if team_1_data_last2 > team_2_data_last2:
+                        team_1_total += 1
+                    else:
+                        team_2_total += 1
+                    print(f'Score prediction for {team_1} last 2 game: {team_1_data_last2}')
+                    print(f'Score prediction for {team_2} last 2 game: {team_2_data_last2}')
+                data1 = final_data_1.iloc[-3:].dropna().median(axis=0,skipna=True).to_frame().T
+                data2 = final_data_2.iloc[-3:].dropna().median(axis=0,skipna=True).to_frame().T
+                if ~data1.empty and ~data2.empty:
+                    team_1_data_last3 = model.predict(data1)
+                    team_2_data_last3 = model.predict(data2)
+                    if team_1_data_last3 > team_2_data_last3:
+                        team_1_total += 1
+                    else:
+                        team_2_total += 1
+                    print(f'Score prediction for {team_1} last 3 game: {team_1_data_last3}')
+                    print(f'Score prediction for {team_2} last 3 game: {team_2_data_last3}')
+                data1 = final_data_1.iloc[-5:].dropna().median(axis=0,skipna=True).to_frame().T
+                data2 = final_data_2.iloc[-5:].dropna().median(axis=0,skipna=True).to_frame().T
+                if ~data1.empty and ~data2.empty:
+                    team_1_data_last5 = model.predict(data1)
+                    team_2_data_last5 = model.predict(data2)
+                    if team_1_data_last5 > team_2_data_last5:
+                        team_1_total += 1
+                    else:
+                        team_2_total += 1
+                    print(f'Score prediction for {team_1} last 5 game: {team_1_data_last5}')
+                    print(f'Score prediction for {team_2} last 5 game: {team_2_data_last5}')
                 print(f'{team_1} total: {team_1_total}')
                 print(f'{team_2} total: {team_2_total}')
-                print('====================================')
+                print('===============================================================')
                 # score_val_1 = model.predict(df_features_1)
                 # score_val_2 = model.predict(df_features_2)
                 #predict outcomes 
