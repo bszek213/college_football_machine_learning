@@ -518,11 +518,21 @@ class cfb_regressor():
                 if team_1 == 'exit':
                     break
                 team_2 = input('team_2: ')
-                year = int(input('year: '))
+                # year = int(input('year: '))
+                year = 2021
+                #2021
                 team_1_url = 'https://www.sports-reference.com/cfb/schools/' + team_1.lower() + '/' + str(year) + '/gamelog/'
                 team_2_url = 'https://www.sports-reference.com/cfb/schools/' + team_2.lower() + '/' + str(year) + '/gamelog/'
-                team_1_df = html_to_df_web_scrape(team_1_url,team_1,year)
-                team_2_df = html_to_df_web_scrape(team_2_url,team_2,year)
+                team_1_df2021 = html_to_df_web_scrape(team_1_url,team_1,year)
+                team_2_df2021 = html_to_df_web_scrape(team_2_url,team_2,year)
+                #2022
+                team_1_url = 'https://www.sports-reference.com/cfb/schools/' + team_1.lower() + '/' + str(year+1) + '/gamelog/'
+                team_2_url = 'https://www.sports-reference.com/cfb/schools/' + team_2.lower() + '/' + str(year+1) + '/gamelog/'
+                team_1_df2022= html_to_df_web_scrape(team_1_url,team_1,year)
+                team_2_df2022 = html_to_df_web_scrape(team_2_url,team_2,year)
+                #concatenate 2021 and 2022
+                team_1_df = pd.concat([team_1_df2021, team_1_df2022])
+                team_2_df = pd.concat([team_2_df2021, team_2_df2022])
                 #clean team 1 labels
                 team_1_df['game_result'] = team_1_df['game_result'].str.replace('W','')
                 team_1_df['game_result'] = team_1_df['game_result'].str.replace('L','')
@@ -560,15 +570,32 @@ class cfb_regressor():
                 #create data for prediction
                 df_features_1 = final_data_1.median(axis=0,skipna=True).to_frame().T
                 df_features_2 = final_data_2.median(axis=0,skipna=True).to_frame().T
-
+                team_1_total = 0
+                team_2_total = 0
                 team_1_data_all = model.predict(final_data_1.median(axis=0,skipna=True).to_frame().T)
                 team_2_data_all = model.predict(final_data_2.median(axis=0,skipna=True).to_frame().T)
+                if team_1_data_all > team_2_data_all:
+                    team_1_total += 1
+                else:
+                    team_2_total += 1
                 team_1_data_last = model.predict(final_data_1.iloc[-1:].median(axis=0,skipna=True).to_frame().T)
                 team_2_data_last = model.predict(final_data_2.iloc[-1:].median(axis=0,skipna=True).to_frame().T)
+                if team_1_data_last > team_2_data_last:
+                    team_1_total += 1
+                else:
+                    team_2_total += 1
                 team_1_data_last2 = model.predict(final_data_1.iloc[-2:].median(axis=0,skipna=True).to_frame().T)
                 team_2_data_last2 = model.predict(final_data_2.iloc[-2:].median(axis=0,skipna=True).to_frame().T)
+                if team_1_data_last2 > team_2_data_last2:
+                    team_1_total += 1
+                else:
+                    team_2_total += 1
                 team_1_data_last5 = model.predict(final_data_1.iloc[-5:].median(axis=0,skipna=True).to_frame().T)
                 team_2_data_last5 = model.predict(final_data_2.iloc[-5:].median(axis=0,skipna=True).to_frame().T)
+                if team_1_data_last5 > team_2_data_last5:
+                    team_1_total += 1
+                else:
+                    team_2_total += 1
                 print('====================================')
                 print(f'Score prediction for {team_1} across season: {team_1_data_all}')
                 print(f'Score prediction for {team_2} across season: {team_2_data_all}')
@@ -582,6 +609,8 @@ class cfb_regressor():
                 # print(f'Score prediction for {team_2} last 4 game: {model.predict(final_data_2.iloc[-4:].median(axis=0,skipna=True).to_frame().T)}')
                 print(f'Score prediction for {team_1} last 5 game: {team_1_data_last5}')
                 print(f'Score prediction for {team_2} last 5 game: {team_2_data_last5}')
+                print(f'{team_1} total: {team_1_total}')
+                print(f'{team_2} total: {team_2_total}')
                 print('====================================')
                 # score_val_1 = model.predict(df_features_1)
                 # score_val_2 = model.predict(df_features_2)
