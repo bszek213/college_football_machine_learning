@@ -44,7 +44,7 @@ import pickle
 from tqdm import tqdm
 # from sklearn import tree
 # from subprocess import call
-# from time import sleep
+from time import sleep
 #TODO: Build the keras hyperparam tuner
 # Save models with pickle to avoid refitting time
 class cfb_regressor():
@@ -281,7 +281,7 @@ class cfb_regressor():
             history = model.fit(scaled_train,
                         self.y_train,
                         # callbacks=[es],
-                        epochs=200, # you can set this to a big number!
+                        epochs=100, # you can set this to a big number!
                         batch_size=20,
                         # validation_split=0.2,           
                         validation_data=(scaled_test, self.y_test),
@@ -526,13 +526,16 @@ class cfb_regressor():
                 team_1_df2021 = html_to_df_web_scrape(team_1_url,team_1,year)
                 team_2_df2021 = html_to_df_web_scrape(team_2_url,team_2,year)
                 #2022
-                team_1_url = 'https://www.sports-reference.com/cfb/schools/' + team_1.lower() + '/' + str(year+1) + '/gamelog/'
-                team_2_url = 'https://www.sports-reference.com/cfb/schools/' + team_2.lower() + '/' + str(year+1) + '/gamelog/'
+                year = 2022
+                team_1_url = 'https://www.sports-reference.com/cfb/schools/' + team_1.lower() + '/' + str(year) + '/gamelog/'
+                team_2_url = 'https://www.sports-reference.com/cfb/schools/' + team_2.lower() + '/' + str(year) + '/gamelog/'
                 team_1_df2022= html_to_df_web_scrape(team_1_url,team_1,year)
                 team_2_df2022 = html_to_df_web_scrape(team_2_url,team_2,year)
                 #concatenate 2021 and 2022
                 team_1_df = pd.concat([team_1_df2021, team_1_df2022])
                 team_2_df = pd.concat([team_2_df2021, team_2_df2022])
+                print(team_1_df)
+                sleep(100)
                 #clean team 1 labels
                 team_1_df['game_result'] = team_1_df['game_result'].str.replace('W','')
                 team_1_df['game_result'] = team_1_df['game_result'].str.replace('L','')
