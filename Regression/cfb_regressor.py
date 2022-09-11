@@ -63,7 +63,7 @@ class cfb_regressor():
         # isExists = exists(final_dir)
         year_list_find = []
         # if isExists == False:
-        year_list = [2021,2019,2018,2017,2016,2015]#,2014,2013,,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000]
+        year_list = [2022,2021,2019,2018,2017,2016,2015]#,2014,2013,,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000]
         if exists(join(getcwd(),'year_count.yaml')):
             with open(join(getcwd(),'year_count.yaml')) as file:
                 year_counts = yaml.load(file, Loader=yaml.FullLoader)
@@ -186,7 +186,7 @@ class cfb_regressor():
             print('Found yaml - reading in hyperparameters now and fitting')
             if  exists(join(getcwd(),'saved_models')) == False:
                 mkdir(join(getcwd(),'saved_models'))
-            if exists(join(getcwd(),'saved_models', 'SVM.sav')) == False:
+            if exists(join(getcwd(),'saved_models', 'svm_model.sav')) == False:
                 filename = 'svm_model.sav'
                 svm_model = SVR(**self.hyper_param_dict['SVM']).fit(self.x_train,self.y_train)
                 pickle.dump(svm_model, open(join(getcwd(),'saved_models', 'svm_model.sav'), 'wb'))
@@ -281,7 +281,7 @@ class cfb_regressor():
             history = model.fit(scaled_train,
                         self.y_train,
                         # callbacks=[es],
-                        epochs=500, # you can set this to a big number!
+                        epochs=200, # you can set this to a big number!
                         batch_size=20,
                         # validation_split=0.2,           
                         validation_data=(scaled_test, self.y_test),
@@ -292,7 +292,7 @@ class cfb_regressor():
             # pred_train = history.predict(self.x_test) #will need this in the future when I want to look at one team vs. another
             scaled_data = scaler.fit_transform(self.x_test)
             scaled_test = pd.DataFrame(scaled_data, columns = self.x_test.columns)
-            scores = model.evaluate(scaled_test, self.y_test, verbose=0)
+            scores = model.evaluate(scaled_test, self.y_test)
             keras_y_predict = model.predict(scaled_test)
             plt.figure()
             plt.plot(history.history['root_mean_squared_error'])
@@ -539,8 +539,7 @@ class cfb_regressor():
                 team_2_df['game_result'] = team_2_df['game_result'].str.split('-').str[0]
                 team_2_df['game_result'] = team_2_df['game_result'].str.replace('-','')
                 final_data_2 = team_2_df.replace(r'^\s*$', np.NaN, regex=True) #replace empty string with NAN
-                
-                
+
                 for col in final_data_1.columns:
                     if 'Unnamed' in col:
                         final_data_1.drop(columns=col,inplace=True)
@@ -561,19 +560,28 @@ class cfb_regressor():
                 #create data for prediction
                 df_features_1 = final_data_1.median(axis=0,skipna=True).to_frame().T
                 df_features_2 = final_data_2.median(axis=0,skipna=True).to_frame().T
+
+                team_1_data_all = model.predict(final_data_1.median(axis=0,skipna=True).to_frame().T)
+                team_2_data_all = model.predict(final_data_2.median(axis=0,skipna=True).to_frame().T)
+                team_1_data_last = model.predict(final_data_1.iloc[-1:].median(axis=0,skipna=True).to_frame().T)
+                team_2_data_last = model.predict(final_data_2.iloc[-1:].median(axis=0,skipna=True).to_frame().T)
+                team_1_data_last2 = model.predict(final_data_1.iloc[-2:].median(axis=0,skipna=True).to_frame().T)
+                team_2_data_last2 = model.predict(final_data_2.iloc[-2:].median(axis=0,skipna=True).to_frame().T)
+                team_1_data_last5 = model.predict(final_data_1.iloc[-5:].median(axis=0,skipna=True).to_frame().T)
+                team_2_data_last5 = model.predict(final_data_2.iloc[-5:].median(axis=0,skipna=True).to_frame().T)
                 print('====================================')
-                print(f'Score prediction for {team_1} across season: {model.predict(final_data_1.median(axis=0,skipna=True).to_frame().T)}')
-                print(f'Score prediction for {team_2} across season: {model.predict(final_data_2.median(axis=0,skipna=True).to_frame().T)}')
-                print(f'Score prediction for {team_1} last game: {model.predict(final_data_1.iloc[-1:].median(axis=0,skipna=True).to_frame().T)}')
-                print(f'Score prediction for {team_2} last game: {model.predict(final_data_2.iloc[-1:].median(axis=0,skipna=True).to_frame().T)}')
-                print(f'Score prediction for {team_1} last 2 game: {model.predict(final_data_1.iloc[-2:].median(axis=0,skipna=True).to_frame().T)}')
-                print(f'Score prediction for {team_2} last 2 game: {model.predict(final_data_2.iloc[-2:].median(axis=0,skipna=True).to_frame().T)}')
-                print(f'Score prediction for {team_1} last 3 game: {model.predict(final_data_1.iloc[-3:].median(axis=0,skipna=True).to_frame().T)}')
-                print(f'Score prediction for {team_2} last 3 game: {model.predict(final_data_2.iloc[-3:].median(axis=0,skipna=True).to_frame().T)}')
-                print(f'Score prediction for {team_1} last 4 game: {model.predict(final_data_1.iloc[-4:].median(axis=0,skipna=True).to_frame().T)}')
-                print(f'Score prediction for {team_2} last 4 game: {model.predict(final_data_2.iloc[-4:].median(axis=0,skipna=True).to_frame().T)}')
-                print(f'Score prediction for {team_1} last 5 game: {model.predict(final_data_1.iloc[-5:].median(axis=0,skipna=True).to_frame().T)}')
-                print(f'Score prediction for {team_2} last 5 game: {model.predict(final_data_2.iloc[-5:].median(axis=0,skipna=True).to_frame().T)}')
+                print(f'Score prediction for {team_1} across season: {team_1_data_all}')
+                print(f'Score prediction for {team_2} across season: {team_2_data_all}')
+                print(f'Score prediction for {team_1} last game: {team_1_data_last}')
+                print(f'Score prediction for {team_2} last game: {team_2_data_last}')
+                print(f'Score prediction for {team_1} last 2 game: {team_1_data_last2}')
+                print(f'Score prediction for {team_2} last 2 game: {team_2_data_last2}')
+                # print(f'Score prediction for {team_1} last 3 game: {model.predict(final_data_1.iloc[-3:].median(axis=0,skipna=True).to_frame().T)}')
+                # print(f'Score prediction for {team_2} last 3 game: {model.predict(final_data_2.iloc[-3:].median(axis=0,skipna=True).to_frame().T)}')
+                # print(f'Score prediction for {team_1} last 4 game: {model.predict(final_data_1.iloc[-4:].median(axis=0,skipna=True).to_frame().T)}')
+                # print(f'Score prediction for {team_2} last 4 game: {model.predict(final_data_2.iloc[-4:].median(axis=0,skipna=True).to_frame().T)}')
+                print(f'Score prediction for {team_1} last 5 game: {team_1_data_last5}')
+                print(f'Score prediction for {team_2} last 5 game: {team_2_data_last5}')
                 print('====================================')
                 # score_val_1 = model.predict(df_features_1)
                 # score_val_2 = model.predict(df_features_2)
