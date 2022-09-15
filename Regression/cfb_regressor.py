@@ -42,6 +42,7 @@ from eli5.sklearn import PermutationImportance
 from eli5 import show_weights
 import pickle
 from tqdm import tqdm
+from sklearn.linear_model import PassiveAggressiveRegressor
 # from sklearn import tree
 # from subprocess import call
 # from time import sleep
@@ -187,25 +188,19 @@ class cfb_regressor():
             if  exists(join(getcwd(),'saved_models')) == False:
                 mkdir(join(getcwd(),'saved_models'))
             if exists(join(getcwd(),'saved_models', 'svm_model.sav')) == False:
-                filename = 'svm_model.sav'
                 svm_model = SVR(**self.hyper_param_dict['SVM']).fit(self.x_train,self.y_train)
                 pickle.dump(svm_model, open(join(getcwd(),'saved_models', 'svm_model.sav'), 'wb'))
             else:
-                filename = 'svm_model.sav'
                 svm_model = pickle.load(open(join(getcwd(),'saved_models', 'svm_model.sav'), 'rb'))
             if exists(join(getcwd(),'saved_models', 'Gradclass.sav')) == False:
-                filename = 'Gradclass.sav'
                 Gradclass = GradientBoostingRegressor(**self.hyper_param_dict['GradientBoosting']).fit(self.x_train,self.y_train)
                 pickle.dump(Gradclass, open(join(getcwd(),'saved_models', 'Gradclass.sav'), 'wb'))
             else:
-                filename = 'Gradclass.sav'
                 Gradclass = pickle.load(open(join(getcwd(),'saved_models', 'Gradclass.sav'), 'rb'))
             if exists(join(getcwd(),'saved_models', 'RandForclass.sav')) == False:
                 RandForclass = RandomForestRegressor(**self.hyper_param_dict['RandomForest']).fit(self.x_train,self.y_train)
-                filename = 'RandForclass.sav'
                 pickle.dump(RandForclass, open(join(getcwd(),'saved_models', 'RandForclass.sav'), 'wb'))
             else:
-                filename = 'RandForclass.sav'
                 RandForclass = pickle.load(open(join(getcwd(),'saved_models', 'RandForclass.sav'), 'rb'))
                 #Save tree
                 # estimator = RandForclass.estimators_[5]
@@ -218,46 +213,41 @@ class cfb_regressor():
                 # plt.close()
             if exists(join(getcwd(),'saved_models', 'ada_class.sav')) == False:
                 ada_class = AdaBoostRegressor(**self.hyper_param_dict['Ada']).fit(self.x_train,self.y_train)
-                filename = 'ada_class.sav'
                 pickle.dump(ada_class, open(join(getcwd(),'saved_models', 'ada_class.sav'), 'wb'))
             else:
-                filename = 'ada_class.sav'
                 ada_class = pickle.load(open(join(getcwd(),'saved_models', 'ada_class.sav'), 'rb'))
             if exists(join(getcwd(),'saved_models', 'DecTreeclass.sav')) == False:
                 DecTreeclass = DecisionTreeRegressor(**self.hyper_param_dict['DecisionTree']).fit(self.x_train,self.y_train)
-                filename = 'DecTreeclass.sav'
                 pickle.dump(DecTreeclass, open(join(getcwd(),'saved_models', 'DecTreeclass.sav'), 'wb'))
             else:
-                filename = 'DecTreeclass.sav'
                 DecTreeclass = pickle.load(open(join(getcwd(),'saved_models', 'DecTreeclass.sav'), 'rb'))
             if exists(join(getcwd(),'saved_models', 'LinReg.sav')) == False:
                 LinReg = LinearRegression().fit(self.x_train,self.y_train)
-                filename = 'LinReg.sav'
                 pickle.dump(LinReg, open(join(getcwd(),'saved_models', 'LinReg.sav'), 'wb'))
             else:
-                filename = 'LinReg.sav'
                 LinReg = pickle.load(open(join(getcwd(),'saved_models', 'LinReg.sav'), 'rb'))
             if exists(join(getcwd(),'saved_models', 'KClass.sav')) == False:
                 KClass = KNeighborsRegressor(**self.hyper_param_dict['KNearestNeighbor']).fit(self.x_train,self.y_train)
-                filename = 'KClass.sav'
                 pickle.dump(KClass, open(join(getcwd(),'saved_models', 'KClass.sav'), 'wb'))
             else:
-                filename = 'KClass.sav'
                 KClass = pickle.load(open(join(getcwd(),'saved_models', 'KClass.sav'), 'rb'))
             if exists(join(getcwd(),'saved_models', 'MLPClass.sav')) == False:
                 MLPClass = MLPRegressor(**self.hyper_param_dict['MLP']).fit(self.x_train,self.y_train)
-                filename = 'MLPClass.sav'
+
                 pickle.dump(MLPClass, open(join(getcwd(),'saved_models', 'MLPClass.sav'), 'wb'))
             else:
-                filename = 'MLPClass.sav'
                 MLPClass = pickle.load(open(join(getcwd(),'saved_models', 'MLPClass.sav'), 'rb'))
             if exists(join(getcwd(),'saved_models', 'xgb_class.sav')) == False:
-                xgb_class = xgb.XGBRegressor(**self.hyper_param_dict['XGB-boost']).fit(self.x_train,self.y_train)  
-                filename = 'xgb_class.sav'
+                xgb_class = xgb.XGBRegressor(**self.hyper_param_dict['XGB-boost']).fit(self.x_train,self.y_train)
                 pickle.dump(xgb_class, open(join(getcwd(),'saved_models', 'xgb_class.sav'), 'wb'))
             else:
-                filename = 'xgb_class.sav'
                 xgb_class = pickle.load(open(join(getcwd(),'saved_models', 'xgb_class.sav'), 'rb'))
+                
+            if exists(join(getcwd(),'saved_models', 'PassiveAggressive.sav')) == False:
+                PassiveAggressive_class = xgb.XGBRegressor(**self.hyper_param_dict['XGB-boost']).fit(self.x_train,self.y_train)  
+                pickle.dump(xgb_class, open(join(getcwd(),'saved_models', 'PassiveAggressive.sav'), 'wb'))
+            else:
+                PassiveAggressive_class = pickle.load(open(join(getcwd(),'saved_models', 'PassiveAggressive.sav'), 'rb'))
             #Keras classifier 
             model = Sequential()
             # model.add(LSTM(12))
@@ -281,7 +271,7 @@ class cfb_regressor():
             history = model.fit(scaled_train,
                         self.y_train,
                         # callbacks=[es],
-                        epochs=50, # you can set this to a big number!
+                        epochs=100, # you can set this to a big number!
                         batch_size=20,
                         # validation_split=0.2,           
                         validation_data=(scaled_test, self.y_test),
@@ -399,8 +389,24 @@ class cfb_regressor():
                                         cv = 5,
                                         verbose=4
                                         )
-    
             grid_search_xgb.fit(self.x_train,self.y_train)
+            
+            estimator = PassiveAggressiveRegressor()
+            parameters_pass = {
+                        'max_iter': np.arange(500, 2000, 500, dtype=int),
+                        'epsilon': np.arange(0.1, 0.5, 0.1, dtype=float),
+                        'tol': np.arange(0.001, 0.01, 0.003, dtype=float),
+                        'C': np.arange(1, 3, 0.5, dtype=float)
+                        }
+            grid_search_pass = GridSearchCV(
+                                        estimator=estimator,
+                                        param_grid=parameters_pass,
+                                        scoring = 'neg_root_mean_squared_error',
+                                        n_jobs = -1,
+                                        cv = 5,
+                                        verbose=4
+                                        )
+            grid_search_pass.fit(self.x_train,self.y_train)
         print('Removed features (>=0.8 correlation): ', self.drop_cols)
         if isExists == False:
             print('GradientBoostingRegressor - best params: ',search_Grad.best_params_)
@@ -413,6 +419,7 @@ class cfb_regressor():
             print('MLPRegressor - best params: ',search_MLP.best_params_)
             print('KNeighborsRegressor- best params: ',search_KClass.best_params_)
             print('XGB-boost - best params: ',grid_search_xgb.best_params_)
+            print('PassiveAggressiveRegressor - best params: ',grid_search_pass.best_params_)
             return 'no model'
         else:
             #r2_score
@@ -427,6 +434,7 @@ class cfb_regressor():
             KClass_err = r2_score(self.y_test, KClass.predict(self.x_test))
             XGB_err = r2_score(self.y_test, xgb_class.predict(self.x_test))
             keras_err = r2_score(self.y_test, keras_y_predict)
+            pass_err = r2_score(self.y_test, PassiveAggressive_class.predict(self.x_test))
             print('GradientBoostingRegressor accuracy',Gradclass_err)
             print('SVM accuracy',svm_err)
             print('RandomForestRegressor accuracy',RandForclass_err)
@@ -437,6 +445,7 @@ class cfb_regressor():
             print('KNeighborsRegressor accuracy',KClass_err)
             print('XGBRegressor accuracy',XGB_err)
             print('KerasRegression accuracy ',keras_err)
+            print('PassiveAggressive accuracy ',pass_err)
             print('====================================')
             dict_models = {'Gradient': Gradclass_err,
                            'RandomForest': RandForclass_err,
@@ -447,7 +456,8 @@ class cfb_regressor():
                            'Kneighbor': KClass_err,
                            'XGB': XGB_err,
                            'Keras': keras_err,
-                           'SVM': svm_err
+                           'SVM': svm_err,
+                           'PassiveAggressive': pass_err
                            }
             model_name_r2 = max(dict_models, key=dict_models.get)
             print(f'Model with the highest r2: {model_name_r2}')
@@ -463,6 +473,7 @@ class cfb_regressor():
             KClass_err = np.sqrt(mean_squared_error(self.y_test, KClass.predict(self.x_test)))
             XGB_err = np.sqrt(mean_squared_error(self.y_test, xgb_class.predict(self.x_test)))
             keras_err = np.sqrt(mean_squared_error(self.y_test, keras_y_predict))
+            pass_err = np.sqrt(mean_squared_error(self.y_test, PassiveAggressive_class.predict(self.x_test)))
             # print(f'Keras best params: {keras_grid.best_score_}, {keras_grid.best_params_}')
             print('GradientBoostingRegressor rmse',Gradclass_err)
             print('SVM rmse',SVMclass_err)
@@ -475,6 +486,7 @@ class cfb_regressor():
             print('KNeighborsRegressor rmse',KClass_err)
             print('XGBRegressor rmse',XGB_err)
             print('KerasRegression rmse ',keras_err)
+            print('PassiveAggressive rmse ',pass_err)
             dict_models = {'Gradient': Gradclass_err,
                            'RandomForest': RandForclass_err,
                            'DecisionTree': DecTreeclass_err,
@@ -484,7 +496,8 @@ class cfb_regressor():
                            'Kneighbor': KClass_err,
                            'XGB': XGB_err,
                            'Keras': keras_err,
-                           'SVM': SVMclass_err
+                           'SVM': SVMclass_err,
+                           'PassiveAggressive': pass_err
                            }
             print('====================================')
             model_name_rmse = min(dict_models, key=dict_models.get)
@@ -510,6 +523,8 @@ class cfb_regressor():
                 return model
             elif model_name_r2 == 'SVM':
                 return svm_model
+            elif model_name_r2 == 'PassiveAggressive':
+                return PassiveAggressive_class
 
     def predict_two_teams(self,model):
         while True:
@@ -658,7 +673,7 @@ class cfb_regressor():
                 print(show_weights(imps,feature_names=self.x_test.columns))
             else:
                 imps = permutation_importance(model, self.x_test, self.y_test)
-            if 'MLPClassifier' or 'LinearRegression' or 'keras' in str(model):
+            if 'MLPClassifier' or 'LinearRegression' or 'PassiveAggressive' or 'keras' in str(model):
                 feature_imp = pd.Series(imps.importances_mean,index=self.x_test.columns).sort_values(ascending=False)
                 plt.close()
                 plt.figure()

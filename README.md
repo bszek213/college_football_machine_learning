@@ -37,6 +37,7 @@ XGBBoost Classifier - best params: {'learning_rate': 0.1, 'max_depth': 4, 'n_est
 'KNearestNeighbor': {'algorithm': 'auto', 'n_neighbors': 30, 'p': 1, 'weights': 'distance'}
 'MLP':   {'activation': 'identity', 'learning_rate': 'invscaling', 'learning_rate_init': 0.002, 'max_iter': 900, 'solver': 'lbfgs'}
 'XGB-boost': {'learning_rate': 0.1, 'max_depth': 2, 'n_estimators': 180}
+'PassiveAggressiveRegressor' : {C': 1.0, 'epsilon': 0.30000000000000004, 'max_iter': 500, 'tol': 0.010000000000000002}
 
 # Classification accuracy
 =======
@@ -62,6 +63,7 @@ MLPRegressor accuracy 0.903872588181907
 KNeighborsRegressor accuracy 0.9087505893124272
 XGBRegressor accuracy 0.9097280310555114
 KerasRegression accuracy  0.8997792797235109
+PassiveAggressive accuracy  0.9025627255172579
 ====================================
 Model with the highest R^2: RandomForest
 ====================================
@@ -76,6 +78,7 @@ MLPRegressor rmse 4.35152371513948
 KNeighborsRegressor rmse 4.239676932806324
 XGBRegressor rmse 4.216908596549564
 KerasRegression rmse  4.443206419520521
+PassiveAggressive rmse  4.431370005092532
 ====================================
 Model with the lowest RMSE: RandomForest
 ====================================
