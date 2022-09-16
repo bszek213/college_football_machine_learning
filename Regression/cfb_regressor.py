@@ -582,7 +582,9 @@ class cfb_regressor():
                 final_data_2.drop(columns=self.drop_cols, inplace=True)
                 final_data_1.drop(columns=['game_result'], inplace=True)
                 final_data_2.drop(columns=['game_result'], inplace=True)
-                
+                #dropnans
+                final_data_1.dropna(inplace=True)
+                final_data_2.dropna(inplace=True)
                 #create data for prediction
                 df_features_1 = final_data_1.dropna().median(axis=0,skipna=True).to_frame().T
                 df_features_2 = final_data_2.dropna().median(axis=0,skipna=True).to_frame().T
@@ -591,59 +593,60 @@ class cfb_regressor():
                 print('============================================================')
                 data1 = final_data_1.dropna().median(axis=0,skipna=True).to_frame().T
                 data2 = final_data_2.dropna().median(axis=0,skipna=True).to_frame().T
-                if ~data1.empty and ~data2.empty:
+                if not data1.isnull().values.any() and not data1.isnull().values.any():
                     team_1_data_all = model.predict(data1)
                     team_2_data_all = model.predict(data2)
                     if team_1_data_all > team_2_data_all:
                         team_1_total += 1
                     else:
                         team_2_total += 1
-                    print(f'Score prediction for {team_1} across 2021 and 2022 season: {team_1_data_all}')
-                    print(f'Score prediction for {team_2} across 2021 and 2022 season: {team_2_data_all}')
+                    print(f'Score prediction for {team_1} across 2021 and 2022 season: {team_1_data_all[0]} points')
+                    print(f'Score prediction for {team_2} across 2021 and 2022 season: {team_2_data_all[0]} points')
                 data1 = final_data_1.iloc[-1:].dropna().median(axis=0,skipna=True).to_frame().T
                 data2 = final_data_1.iloc[-1:].dropna().median(axis=0,skipna=True).to_frame().T
-                if ~data1.empty and ~data2.empty:
+                if not data1.isnull().values.any() and not data1.isnull().values.any():
                     team_1_data_last = model.predict(data1)
                     team_2_data_last = model.predict(data2)
                     if team_1_data_last > team_2_data_last:
                         team_1_total += 1
                     else:
                         team_2_total += 1
-                    print(f'Score prediction for {team_1} last game: {team_1_data_last}')
-                    print(f'Score prediction for {team_2} last game: {team_2_data_last}')
+                    print(f'Score prediction for {team_1} last game: {team_1_data_last[0]} points')
+                    print(f'Score prediction for {team_2} last game: {team_2_data_last[0]} points')
                 data1 = final_data_1.iloc[-2:].dropna().median(axis=0,skipna=True).to_frame().T
                 data2 = final_data_2.iloc[-2:].dropna().median(axis=0,skipna=True).to_frame().T
-                if ~data1.empty and ~data2.empty:
+                if not data1.isnull().values.any() and not data1.isnull().values.any():
                     team_1_data_last2 = model.predict(data1)
                     team_2_data_last2 = model.predict(data2)
                     if team_1_data_last2 > team_2_data_last2:
                         team_1_total += 1
                     else:
                         team_2_total += 1
-                    print(f'Score prediction for {team_1} last 2 game: {team_1_data_last2}')
-                    print(f'Score prediction for {team_2} last 2 game: {team_2_data_last2}')
+                    print(f'Score prediction for {team_1} last 2 game: {team_1_data_last2[0]} points')
+                    print(f'Score prediction for {team_2} last 2 game: {team_2_data_last2[0]} points')
                 data1 = final_data_1.iloc[-3:].dropna().median(axis=0,skipna=True).to_frame().T
                 data2 = final_data_2.iloc[-3:].dropna().median(axis=0,skipna=True).to_frame().T
-                if ~data1.empty and ~data2.empty:
+                if not data1.isnull().values.any() and not data1.isnull().values.any():
                     team_1_data_last3 = model.predict(data1)
                     team_2_data_last3 = model.predict(data2)
                     if team_1_data_last3 > team_2_data_last3:
                         team_1_total += 1
                     else:
                         team_2_total += 1
-                    print(f'Score prediction for {team_1} last 3 game: {team_1_data_last3}')
-                    print(f'Score prediction for {team_2} last 3 game: {team_2_data_last3}')
+                    print(f'Score prediction for {team_1} last 3 game: {team_1_data_last3[0]} points')
+                    print(f'Score prediction for {team_2} last 3 game: {team_2_data_last3[0]} points')
                 data1 = final_data_1.iloc[-5:].dropna().median(axis=0,skipna=True).to_frame().T
                 data2 = final_data_2.iloc[-5:].dropna().median(axis=0,skipna=True).to_frame().T
-                if ~data1.empty and ~data2.empty:
+                if not data1.isnull().values.any() and not data1.isnull().values.any():
                     team_1_data_last5 = model.predict(data1)
                     team_2_data_last5 = model.predict(data2)
                     if team_1_data_last5 > team_2_data_last5:
                         team_1_total += 1
                     else:
                         team_2_total += 1
-                    print(f'Score prediction for {team_1} last 5 game: {team_1_data_last5}')
-                    print(f'Score prediction for {team_2} last 5 game: {team_2_data_last5}')
+                    print(f'Score prediction for {team_1} last 5 game: {team_1_data_last5[0]} points')
+                    print(f'Score prediction for {team_2} last 5 game: {team_2_data_last5[0]} points')
+                print('=Matchup win count=')
                 print(f'{team_1} total: {team_1_total}')
                 print(f'{team_2} total: {team_2_total}')
                 print('===============================================================')
