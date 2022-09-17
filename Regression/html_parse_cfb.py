@@ -51,6 +51,7 @@ def html_to_df_web_scrape(URL,team,year):
     fumbles_lost = []
     pass_int = []
     havoc = []
+    game_loc = []
     for trb in tr_body:
         for td in trb.find_all('td'):
             if td.get('data-stat') == "opp_name":
@@ -279,8 +280,11 @@ def html_to_df_web_scrape(URL,team,year):
                 pass_int.append(td.get_text())
             if td.get('data-stat') == "fumbles_lost":
                 fumbles_lost.append(td.get_text())
-
-
+            if td.get('data-stat') == "game_location":
+                if td.get_text() == '@':
+                    game_loc.append(0) #away
+                else:
+                    game_loc.append(1) #home
     df = DataFrame(list(zip(game_result,turnovers,pass_cmp,pass_att,pass_yds,
     pass_td,
     rush_att,
@@ -296,11 +300,11 @@ def html_to_df_web_scrape(URL,team,year):
     penalty,
     penalty_yds,
     fumbles_lost,
-    pass_int,havoc)),
+    pass_int,havoc,game_loc)),
                 columns =['game_result','turnovers', 'pass_cmp', 'pass_att', 'pass_yds', 'pass_td', 'rush_att', 
                    'rush_yds', 'rush_td', 'rush_yds_per_att', 'tot_plays', 'tot_yds_per_play',
                    'first_down_pass', 'first_down_rush', 'first_down_penalty', 'first_down', 'penalty', 'penalty_yds', 'fumbles_lost',
-                   'pass_int','havoc'])
+                   'pass_int','havoc','game_loc'])
     return df
 
 def cbfd(school):

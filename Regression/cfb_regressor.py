@@ -533,6 +533,8 @@ class cfb_regressor():
                 if team_1 == 'exit':
                     break
                 team_2 = input('team_2: ')
+                print(f'is {team_1} home or away:')
+                team_1_loc = input('type home or away')
                 # year = int(input('year: '))
                 year = 2021
                 #2021
@@ -593,10 +595,20 @@ class cfb_regressor():
                 print('============================================================')
                 data1 = final_data_1.dropna().median(axis=0,skipna=True).to_frame().T
                 data2 = final_data_2.dropna().median(axis=0,skipna=True).to_frame().T
+                if team_1_loc == 'home':
+                    team_2_loc = 0
+                    team_1_loc = 1
+                elif team_1_loc == 'away':
+                    team_2_loc = 1
+                    team_1_loc = 0
+                data1['game_loc'] = team_1_loc
+                data2['game_loc'] = team_2_loc
+                print(data1)
+                print(data2)
                 if not data1.isnull().values.any() and not data1.isnull().values.any():
                     team_1_data_all = model.predict(data1)
                     team_2_data_all = model.predict(data2)
-                    if team_1_data_all > team_2_data_all:
+                    if team_1_data_all[0] > team_2_data_all[0]:
                         team_1_total += 1
                     else:
                         team_2_total += 1
@@ -607,7 +619,7 @@ class cfb_regressor():
                 if not data1.isnull().values.any() and not data1.isnull().values.any():
                     team_1_data_last = model.predict(data1)
                     team_2_data_last = model.predict(data2)
-                    if team_1_data_last > team_2_data_last:
+                    if team_1_data_last[0] > team_2_data_last[0]:
                         team_1_total += 1
                     else:
                         team_2_total += 1
@@ -618,7 +630,7 @@ class cfb_regressor():
                 if not data1.isnull().values.any() and not data1.isnull().values.any():
                     team_1_data_last2 = model.predict(data1)
                     team_2_data_last2 = model.predict(data2)
-                    if team_1_data_last2 > team_2_data_last2:
+                    if team_1_data_last2[0] > team_2_data_last2[0]:
                         team_1_total += 1
                     else:
                         team_2_total += 1
@@ -629,7 +641,7 @@ class cfb_regressor():
                 if not data1.isnull().values.any() and not data1.isnull().values.any():
                     team_1_data_last3 = model.predict(data1)
                     team_2_data_last3 = model.predict(data2)
-                    if team_1_data_last3 > team_2_data_last3:
+                    if team_1_data_last3[0] > team_2_data_last3[0]:
                         team_1_total += 1
                     else:
                         team_2_total += 1
@@ -640,7 +652,7 @@ class cfb_regressor():
                 if not data1.isnull().values.any() and not data1.isnull().values.any():
                     team_1_data_last5 = model.predict(data1)
                     team_2_data_last5 = model.predict(data2)
-                    if team_1_data_last5 > team_2_data_last5:
+                    if team_1_data_last5[0] > team_2_data_last5[0]:
                         team_1_total += 1
                     else:
                         team_2_total += 1
