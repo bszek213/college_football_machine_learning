@@ -611,7 +611,7 @@ class cfb_regressor():
                     print(f'Score prediction for {team_1} across 2021 and 2022 season: {team_1_data_all[0]} points')
                     print(f'Score prediction for {team_2} across 2021 and 2022 season: {team_2_data_all[0]} points')
                 data1 = final_data_1.iloc[-1:].dropna().median(axis=0,skipna=True).to_frame().T
-                data2 = final_data_1.iloc[-1:].dropna().median(axis=0,skipna=True).to_frame().T
+                data2 = final_data_2.iloc[-1:].dropna().median(axis=0,skipna=True).to_frame().T
                 if not data1.isnull().values.any() and not data1.isnull().values.any():
                     team_1_data_last = model.predict(data1)
                     team_2_data_last = model.predict(data2)

@@ -7,6 +7,7 @@ Just execute the random forest regressor
 from html_parse_cfb import html_to_df_web_scrape
 # import argparse
 from sportsipy.ncaaf.teams import Teams
+from sportsipy.ncaaf.rankings import Rankings
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -135,8 +136,8 @@ class cfb_regressor():
             Q1 = np.percentile(self.x_no_corr[col_name], 25)
             Q3 = np.percentile(self.x_no_corr[col_name], 75)
             IQR = Q3 - Q1
-            upper = np.where(self.x_no_corr[col_name] >= (Q3+2.5*IQR)) #1.5 is the standard, use two to see if more data helps improve model performance
-            lower = np.where(self.x_no_corr[col_name] <= (Q1-2.5*IQR)) 
+            upper = np.where(self.x_no_corr[col_name] >= (Q3+3.0*IQR)) #1.5 is the standard, use two to see if more data helps improve model performance
+            lower = np.where(self.x_no_corr[col_name] <= (Q1-3.0*IQR)) 
             self.x_no_corr.drop(upper[0], inplace = True)
             self.x_no_corr.drop(lower[0], inplace = True)
             self.y.drop(upper[0], inplace = True)
@@ -178,7 +179,7 @@ class cfb_regressor():
             RandForclass = RandomForestRegressor()
             Rand_perm = {
                 'criterion' : ["squared_error", "absolute_error", "poisson"],
-                'n_estimators': range(100,500,100),
+                'n_estimators': range(100,500,51),
                 'min_samples_split': np.arange(2, 5, 1, dtype=int),
                 'max_features' : [1, 'sqrt', 'log2']
                 }
@@ -215,7 +216,7 @@ class cfb_regressor():
                     break
                 team_2 = input('team_2: ')
                 print(f'is {team_1} home or away:')
-                team_1_loc = input('type home or away')
+                team_1_loc = input('type home or away: ')
                 # year = int(input('year: '))
                 year = 2021
                 #2021
@@ -295,8 +296,9 @@ class cfb_regressor():
                         team_2_total += 1
                     print(f'Score prediction for {team_1} across 2021 and 2022 season: {team_1_data_all[0]} points')
                     print(f'Score prediction for {team_2} across 2021 and 2022 season: {team_2_data_all[0]} points')
+                    print('====')
                 data1 = final_data_1.iloc[-1:].dropna().median(axis=0,skipna=True).to_frame().T
-                data2 = final_data_1.iloc[-1:].dropna().median(axis=0,skipna=True).to_frame().T
+                data2 = final_data_2.iloc[-1:].dropna().median(axis=0,skipna=True).to_frame().T
                 if not data1.isnull().values.any() and not data1.isnull().values.any():
                     team_1_data_last = model.predict(data1)
                     team_2_data_last = model.predict(data2)
@@ -306,6 +308,7 @@ class cfb_regressor():
                         team_2_total += 1
                     print(f'Score prediction for {team_1} last game: {team_1_data_last[0]} points')
                     print(f'Score prediction for {team_2} last game: {team_2_data_last[0]} points')
+                    print('====')
                 data1 = final_data_1.iloc[-2:].dropna().median(axis=0,skipna=True).to_frame().T
                 data2 = final_data_2.iloc[-2:].dropna().median(axis=0,skipna=True).to_frame().T
                 if not data1.isnull().values.any() and not data1.isnull().values.any():
@@ -317,6 +320,7 @@ class cfb_regressor():
                         team_2_total += 1
                     print(f'Score prediction for {team_1} last 2 game: {team_1_data_last2[0]} points')
                     print(f'Score prediction for {team_2} last 2 game: {team_2_data_last2[0]} points')
+                    print('====')
                 data1 = final_data_1.iloc[-3:].dropna().median(axis=0,skipna=True).to_frame().T
                 data2 = final_data_2.iloc[-3:].dropna().median(axis=0,skipna=True).to_frame().T
                 if not data1.isnull().values.any() and not data1.isnull().values.any():
@@ -328,6 +332,7 @@ class cfb_regressor():
                         team_2_total += 1
                     print(f'Score prediction for {team_1} last 3 game: {team_1_data_last3[0]} points')
                     print(f'Score prediction for {team_2} last 3 game: {team_2_data_last3[0]} points')
+                    print('====')
                 data1 = final_data_1.iloc[-5:].dropna().median(axis=0,skipna=True).to_frame().T
                 data2 = final_data_2.iloc[-5:].dropna().median(axis=0,skipna=True).to_frame().T
                 if not data1.isnull().values.any() and not data1.isnull().values.any():
@@ -354,6 +359,7 @@ class cfb_regressor():
                     print(y_classes_1)
                     print(f'Score prediction for {team_1}: {score_val_1}')
                     print(f'score prediction for {team_2}: {score_val_2}')
+                    print('====')
                 # else:
                 #     score_val_1 = model.predict(df_features_1)
                 #     score_val_2 = model.predict(df_features_2)
