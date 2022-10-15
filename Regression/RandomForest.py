@@ -136,8 +136,8 @@ class cfb_regressor():
             Q1 = np.percentile(self.x_no_corr[col_name], 25)
             Q3 = np.percentile(self.x_no_corr[col_name], 75)
             IQR = Q3 - Q1
-            upper = np.where(self.x_no_corr[col_name] >= (Q3+3.0*IQR)) #1.5 is the standard, use two to see if more data helps improve model performance
-            lower = np.where(self.x_no_corr[col_name] <= (Q1-3.0*IQR)) 
+            upper = np.where(self.x_no_corr[col_name] >= (Q3+6.0*IQR)) #1.5 is the standard, use two to see if more data helps improve model performance
+            lower = np.where(self.x_no_corr[col_name] <= (Q1-6.0*IQR)) 
             self.x_no_corr.drop(upper[0], inplace = True)
             self.x_no_corr.drop(lower[0], inplace = True)
             self.y.drop(upper[0], inplace = True)
@@ -194,8 +194,8 @@ class cfb_regressor():
             RandForclass = RandomForestRegressor(criterion='absolute_error',
                                                  bootstrap=True,
                                                  max_features='sqrt', 
-                                                 min_samples_split=4, 
-                                                 n_estimators=400
+                                                 min_samples_split=3, 
+                                                 n_estimators=355
                                                  ).fit(self.x_train,self.y_train)
             # RandForclass = RandomForestRegressor(criterion='absolute_error',
             #                                      bootstrap=True,
@@ -287,13 +287,17 @@ class cfb_regressor():
                 data2['game_loc'] = team_2_loc
                 print(data1)
                 print(data2)
+                game_won_team_1 = []
+                game_won_team_2 = []
                 if not data1.isnull().values.any() and not data1.isnull().values.any():
                     team_1_data_all = model.predict(data1)
                     team_2_data_all = model.predict(data2)
                     if team_1_data_all[0] > team_2_data_all[0]:
                         team_1_total += 1
+                        game_won_team_1.append('season')
                     else:
                         team_2_total += 1
+                        game_won_team_2.append('season')
                     print(f'Score prediction for {team_1} across 2021 and 2022 season: {team_1_data_all[0]} points')
                     print(f'Score prediction for {team_2} across 2021 and 2022 season: {team_2_data_all[0]} points')
                     print('====')
@@ -304,8 +308,10 @@ class cfb_regressor():
                     team_2_data_last = model.predict(data2)
                     if team_1_data_last[0] > team_2_data_last[0]:
                         team_1_total += 1
+                        game_won_team_1.append('last_game')
                     else:
                         team_2_total += 1
+                        game_won_team_2.append('last_game')
                     print(f'Score prediction for {team_1} last game: {team_1_data_last[0]} points')
                     print(f'Score prediction for {team_2} last game: {team_2_data_last[0]} points')
                     print('====')
@@ -316,8 +322,10 @@ class cfb_regressor():
                     team_2_data_last2 = model.predict(data2)
                     if team_1_data_last2[0] > team_2_data_last2[0]:
                         team_1_total += 1
+                        game_won_team_1.append('last_2_games')
                     else:
                         team_2_total += 1
+                        game_won_team_2.append('last_2_games')
                     print(f'Score prediction for {team_1} last 2 game: {team_1_data_last2[0]} points')
                     print(f'Score prediction for {team_2} last 2 game: {team_2_data_last2[0]} points')
                     print('====')
@@ -328,8 +336,10 @@ class cfb_regressor():
                     team_2_data_last3 = model.predict(data2)
                     if team_1_data_last3[0] > team_2_data_last3[0]:
                         team_1_total += 1
+                        game_won_team_1.append('last_3_games')
                     else:
                         team_2_total += 1
+                        game_won_team_2.append('last_3_games')
                     print(f'Score prediction for {team_1} last 3 game: {team_1_data_last3[0]} points')
                     print(f'Score prediction for {team_2} last 3 game: {team_2_data_last3[0]} points')
                     print('====')
@@ -340,13 +350,15 @@ class cfb_regressor():
                     team_2_data_last5 = model.predict(data2)
                     if team_1_data_last5[0] > team_2_data_last5[0]:
                         team_1_total += 1
+                        game_won_team_1.append('last_5_games')
                     else:
                         team_2_total += 1
+                        game_won_team_2.append('last_5_games')
                     print(f'Score prediction for {team_1} last 5 game: {team_1_data_last5[0]} points')
                     print(f'Score prediction for {team_2} last 5 game: {team_2_data_last5[0]} points')
                 print('=Matchup win count=')
-                print(f'{team_1} total: {team_1_total}')
-                print(f'{team_2} total: {team_2_total}')
+                print(f'{team_1} total: {team_1_total} : games won: {game_won_team_1}')
+                print(f'{team_2} total: {team_2_total} : games won: {game_won_team_2}')
                 print('===============================================================')
                 # score_val_1 = model.predict(df_features_1)
                 # score_val_2 = model.predict(df_features_2)

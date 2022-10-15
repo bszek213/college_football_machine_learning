@@ -12,10 +12,8 @@ build/
 develop-eggs/
 dist/
 downloads/
-<<<<<<< HEAD
 saved_models/
 =======
->>>>>>> 548a5fd36fd982c9289b69f04690488864b4563b
 eggs/
 .eggs/
 lib/
@@ -30,7 +28,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
