@@ -191,11 +191,11 @@ class cfb_regressor():
             return 'no model'
         else:
             print('fit to model that has been tuned')
-            RandForclass = RandomForestRegressor(criterion='absolute_error',
+            RandForclass = RandomForestRegressor(criterion='squared_error',
                                                  bootstrap=True,
-                                                 max_features='sqrt', 
-                                                 min_samples_split=3, 
-                                                 n_estimators=355
+                                                 max_features='log2', 
+                                                 min_samples_split=4, 
+                                                 n_estimators=304
                                                  ).fit(self.x_train,self.y_train)
             # RandForclass = RandomForestRegressor(criterion='absolute_error',
             #                                      bootstrap=True,
@@ -217,6 +217,12 @@ class cfb_regressor():
                 team_2 = input('team_2: ')
                 print(f'is {team_1} home or away:')
                 team_1_loc = input('type home or away: ')
+                if team_1_loc == 'home':
+                    team_2_loc = 0
+                    team_1_loc = 1
+                elif team_1_loc == 'away':
+                    team_2_loc = 1
+                    team_1_loc = 0
                 # year = int(input('year: '))
                 year = 2021
                 #2021
@@ -274,15 +280,27 @@ class cfb_regressor():
                 df_features_2 = final_data_2.dropna().median(axis=0,skipna=True).to_frame().T
                 team_1_total = 0
                 team_2_total = 0
+                #calculate running average short and long intervals
+                data1_long = final_data_1.dropna().rolling(10).mean()
+                data2_long = final_data_2.dropna().rolling(10).mean()
+                data1_long = data1_long.iloc[-1:]
+                data2_long = data2_long.iloc[-1:]
+                data1_short = final_data_1.dropna().rolling(2).mean()
+                data2_short= final_data_2.dropna().rolling(2).mean()
+                data1_short = data1_short.iloc[-1:]
+                data2_short = data2_short.iloc[-1:]
+                if not data1_long.isnull().values.any() and not data1_short.isnull().values.any():
+                    data1_long['game_loc'] = team_1_loc
+                    data2_long['game_loc'] = team_2_loc
+                    data1_short['game_loc'] = team_1_loc
+                    data2_short['game_loc'] = team_2_loc
+                    team_1_data_long_avg = model.predict(data1_long)
+                    team_2_data_long_avg = model.predict(data2_long)
+                    team_1_data_short_avg = model.predict(data1_short)
+                    team_2_data_short_avg = model.predict(data2_short)
                 print('============================================================')
                 data1 = final_data_1.dropna().median(axis=0,skipna=True).to_frame().T
                 data2 = final_data_2.dropna().median(axis=0,skipna=True).to_frame().T
-                if team_1_loc == 'home':
-                    team_2_loc = 0
-                    team_1_loc = 1
-                elif team_1_loc == 'away':
-                    team_2_loc = 1
-                    team_1_loc = 0
                 data1['game_loc'] = team_1_loc
                 data2['game_loc'] = team_2_loc
                 print(data1)
@@ -356,6 +374,20 @@ class cfb_regressor():
                         game_won_team_2.append('last_5_games')
                     print(f'Score prediction for {team_1} last 5 game: {team_1_data_last5[0]} points')
                     print(f'Score prediction for {team_2} last 5 game: {team_2_data_last5[0]} points')
+                print('===============================================================')
+                print(f'Score prediction for {team_1} running average long: {team_1_data_long_avg[0]} points')
+                print(f'Score prediction for {team_2} running average long: {team_2_data_long_avg[0]} points')
+                print(f'Score prediction for {team_1} running average long: {team_1_data_short_avg[0]} points')
+                print(f'Score prediction for {team_2} running average long: {team_2_data_short_avg[0]} points')
+                print('===============================================================')
+                if team_1_data_long_avg[0] > team_2_data_long_avg[0]:
+                    print(f'{team_1} won with the long running average ')
+                else:
+                    print(f'{team_2} won with the long running average ')
+                if team_1_data_short_avg[0] > team_2_data_short_avg[0]:
+                    print(f'{team_1} won with the short running average ')
+                else:
+                    print(f'{team_2} won with the short running average ')
                 print('=Matchup win count=')
                 print(f'{team_1} total: {team_1_total} : games won: {game_won_team_1}')
                 print(f'{team_2} total: {team_2_total} : games won: {game_won_team_2}')

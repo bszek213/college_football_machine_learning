@@ -217,22 +217,29 @@ def html_to_df_web_scrape(URL,team,year):
                         print('Reason: Internal Server Error, retry in 10 seconds')
                         sleep(10)
                 # print(api_response_2.teams['successRates'])
-                if api_response_2.teams['havoc']:
+                if api_response_2.teams.havoc:
                     # print('=========================================')
                     # temp1 = api_response_2.teams['havoc'][0]['team'].capitalize()
                     # temp2 = api_response_2.teams['havoc'][1]['team'].capitalize()
                     # print(f'{temp1} == {team.capitalize()}')
                     # print(f'{temp2} == {team.capitalize()}')
+                    # print(api_response_2.teams.havoc)
+                    # print(api_response_2.teams.scoring_opportunities)
+                    # print(api_response_2.teams.field_position)
                     try:
-                        if api_response_2.teams['havoc'][0]['team'].capitalize() == team.capitalize():
-                            start_field.append(api_response_2.teams['fieldPosition'][0]['averageStart'])
-                            scoring_opp.append(api_response_2.teams['scoringOpportunities'][0]['pointsPerOpportunity'])
-                            havoc.append(api_response_2.teams['havoc'][0]['total'])
+                        if api_response_2.teams.havoc[0].team.capitalize() == team.capitalize():
+                            havoc.append(api_response_2.teams.havoc[0].total)
+                        else:
+                            havoc.append(api_response_2.teams.havoc[1].total)
+                        if api_response_2.teams.field_position[0].team.capitalize() == team.capitalize():
+                            start_field.append(api_response_2.teams.field_position[0].average_start)
+                        else:
+                            start_field.append(api_response_2.teams.field_position[1].average_start)
+                        if api_response_2.teams.scoring_opportunities[0].team.capitalize() == team.capitalize():
+                            scoring_opp.append(api_response_2.teams.scoring_opportunities[0].points_per_opportunity)
+                        else:
+                            scoring_opp.append(api_response_2.teams.scoring_opportunities[1].points_per_opportunity)
                             # print(f'{temp1} == {team.capitalize()}: True')
-                        elif api_response_2.teams['havoc'][1]['team'].capitalize() == team.capitalize():
-                            start_field.append(api_response_2.teams['fieldPosition'][1]['averageStart'])
-                            scoring_opp.append(api_response_2.teams['scoringOpportunities'][1]['pointsPerOpportunity'])
-                            havoc.append(api_response_2.teams['havoc'][1]['total'])
                     except:
                         print('Key error - team. most liekly the there are no data. return NaN')
                         havoc.append(nan)
