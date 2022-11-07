@@ -1,6 +1,7 @@
 # College Football Game Predictions
 
-machine learning that predicts the outcome of any Division I college football game. Data are from 2000 - 2022 seasons
+machine learning that predicts the outcome of any Division I college football game. Data are from 2000 - 2022 seasons.
+Current accuracy is 77.96% across 246 games in 2022.
 
 ## Installation
 ```bash
