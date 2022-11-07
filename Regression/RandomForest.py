@@ -281,23 +281,31 @@ class cfb_regressor():
                 team_1_total = 0
                 team_2_total = 0
                 #calculate running average short and long intervals
-                data1_long = final_data_1.dropna().rolling(10).mean()
+                data1_long = final_data_1.dropna().rolling(10).mean() #long
                 data2_long = final_data_2.dropna().rolling(10).mean()
                 data1_long = data1_long.iloc[-1:]
                 data2_long = data2_long.iloc[-1:]
-                data1_short = final_data_1.dropna().rolling(2).mean()
+                data1_short = final_data_1.dropna().rolling(2).mean() #long
                 data2_short= final_data_2.dropna().rolling(2).mean()
                 data1_short = data1_short.iloc[-1:]
                 data2_short = data2_short.iloc[-1:]
+                data1_med = final_data_1.dropna().rolling(5).mean() #medium
+                data2_med= final_data_2.dropna().rolling(5).mean()
+                data1_med = data1_med.iloc[-1:]
+                data2_med = data2_med.iloc[-1:]
                 if not data1_long.isnull().values.any() and not data1_short.isnull().values.any():
                     data1_long['game_loc'] = team_1_loc
                     data2_long['game_loc'] = team_2_loc
                     data1_short['game_loc'] = team_1_loc
                     data2_short['game_loc'] = team_2_loc
+                    data1_med['game_loc'] = team_1_loc
+                    data2_med['game_loc'] = team_2_loc
                     team_1_data_long_avg = model.predict(data1_long)
                     team_2_data_long_avg = model.predict(data2_long)
                     team_1_data_short_avg = model.predict(data1_short)
                     team_2_data_short_avg = model.predict(data2_short)
+                    team_1_data_med_avg = model.predict(data1_med)
+                    team_2_data_med_avg = model.predict(data2_med)
                 print('============================================================')
                 data1 = final_data_1.dropna().median(axis=0,skipna=True).to_frame().T
                 data2 = final_data_2.dropna().median(axis=0,skipna=True).to_frame().T
@@ -379,16 +387,24 @@ class cfb_regressor():
                 print(f'Score prediction for {team_2} running average long: {team_2_data_long_avg[0]} points')
                 print(f'Score prediction for {team_1} running average long: {team_1_data_short_avg[0]} points')
                 print(f'Score prediction for {team_2} running average long: {team_2_data_short_avg[0]} points')
+                print(f'Score prediction for {team_1} running average long: {team_1_data_med_avg[0]} points')
+                print(f'Score prediction for {team_2} running average long: {team_2_data_med_avg[0]} points')
                 print('===============================================================')
+                vote_running_avg = []
                 if team_1_data_long_avg[0] > team_2_data_long_avg[0]:
-                    print(f'{team_1} won with the long running average ')
+                    vote_running_avg.append(team_1)
                 else:
-                    print(f'{team_2} won with the long running average ')
+                    vote_running_avg.append(team_2)
                 if team_1_data_short_avg[0] > team_2_data_short_avg[0]:
-                    print(f'{team_1} won with the short running average ')
+                    vote_running_avg.append(team_1)
                 else:
-                    print(f'{team_2} won with the short running average ')
-                print('=Matchup win count=')
+                    vote_running_avg.append(team_2)
+                if team_1_data_med_avg[0] > team_2_data_med_avg[0]:
+                    vote_running_avg.append(team_1)
+                else:
+                    vote_running_avg.append(team_2)
+                print('====Matchup win count=====')
+                print(f'Running average vote across short, medium, and long intervals: {vote_running_avg}')
                 print(f'{team_1} total: {team_1_total} : games won: {game_won_team_1}')
                 print(f'{team_2} total: {team_2_total} : games won: {game_won_team_2}')
                 print('===============================================================')
