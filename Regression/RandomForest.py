@@ -50,6 +50,8 @@ import sys
 # from time import sleep
 #TODO: Build the keras hyperparam tuner
 # Save models with pickle to avoid refitting time
+import warnings
+warnings.filterwarnings("ignore")
 class cfb_regressor():
     def __init__(self):
         print('initialize class cfb')
@@ -108,7 +110,7 @@ class cfb_regressor():
                     print(f'writing {year} to yaml file')
         else:
             self.all_data = pd.read_csv(join(getcwd(),'all_data_regressor.csv'))
-        print('len data: ', len(self.all_data))
+            print(f'size before removal of duplicates : {len(self.all_data)}')
             
         # else:
         #     self.all_data = pd.read_csv(final_dir)
@@ -117,6 +119,8 @@ class cfb_regressor():
         for col in self.all_data.columns:
             if 'Unnamed' in col:
                 self.all_data.drop(columns=col,inplace=True)
+        self.all_data = self.all_data.drop_duplicates(keep='first') #delete duplicate data
+        print('len data after removal of duplicates: ', len(self.all_data))
         self.y = self.all_data['game_result']
         self.x = self.all_data.drop(columns=['game_result'])
         self.pre_process()
@@ -281,16 +285,16 @@ class cfb_regressor():
                 team_1_total = 0
                 team_2_total = 0
                 #calculate running average short and long intervals
-                data1_long = final_data_1.dropna().rolling(10).mean() #long
-                data2_long = final_data_2.dropna().rolling(10).mean()
+                data1_long = final_data_1.dropna().rolling(6).median() #long
+                data2_long = final_data_2.dropna().rolling(6).median()
                 data1_long = data1_long.iloc[-1:]
                 data2_long = data2_long.iloc[-1:]
-                data1_short = final_data_1.dropna().rolling(2).mean() #long
-                data2_short= final_data_2.dropna().rolling(2).mean()
+                data1_short = final_data_1.dropna().rolling(2).median() #long
+                data2_short= final_data_2.dropna().rolling(2).median()
                 data1_short = data1_short.iloc[-1:]
                 data2_short = data2_short.iloc[-1:]
-                data1_med = final_data_1.dropna().rolling(5).mean() #medium
-                data2_med= final_data_2.dropna().rolling(5).mean()
+                data1_med = final_data_1.dropna().rolling(4).median() #medium
+                data2_med= final_data_2.dropna().rolling(4).median()
                 data1_med = data1_med.iloc[-1:]
                 data2_med = data2_med.iloc[-1:]
                 if not data1_long.isnull().values.any() and not data1_short.isnull().values.any():
@@ -306,13 +310,13 @@ class cfb_regressor():
                     team_2_data_short_avg = model.predict(data2_short)
                     team_1_data_med_avg = model.predict(data1_med)
                     team_2_data_med_avg = model.predict(data2_med)
+                    print(data1_long)
+                    print(data2_long)
                 print('============================================================')
                 data1 = final_data_1.dropna().median(axis=0,skipna=True).to_frame().T
                 data2 = final_data_2.dropna().median(axis=0,skipna=True).to_frame().T
                 data1['game_loc'] = team_1_loc
                 data2['game_loc'] = team_2_loc
-                print(data1)
-                print(data2)
                 game_won_team_1 = []
                 game_won_team_2 = []
                 if not data1.isnull().values.any() and not data1.isnull().values.any():
@@ -385,10 +389,10 @@ class cfb_regressor():
                 print('===============================================================')
                 print(f'Score prediction for {team_1} running average long: {team_1_data_long_avg[0]} points')
                 print(f'Score prediction for {team_2} running average long: {team_2_data_long_avg[0]} points')
-                print(f'Score prediction for {team_1} running average long: {team_1_data_short_avg[0]} points')
-                print(f'Score prediction for {team_2} running average long: {team_2_data_short_avg[0]} points')
-                print(f'Score prediction for {team_1} running average long: {team_1_data_med_avg[0]} points')
-                print(f'Score prediction for {team_2} running average long: {team_2_data_med_avg[0]} points')
+                print(f'Score prediction for {team_1} running average short: {team_1_data_short_avg[0]} points')
+                print(f'Score prediction for {team_2} running average short: {team_2_data_short_avg[0]} points')
+                print(f'Score prediction for {team_1} running average medium: {team_1_data_med_avg[0]} points')
+                print(f'Score prediction for {team_2} running average medium: {team_2_data_med_avg[0]} points')
                 print('===============================================================')
                 vote_running_avg = []
                 if team_1_data_long_avg[0] > team_2_data_long_avg[0]:
