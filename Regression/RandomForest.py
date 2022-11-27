@@ -11,7 +11,7 @@ from sportsipy.ncaaf.rankings import Rankings
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-# from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.ensemble import RandomForestRegressor
@@ -47,11 +47,18 @@ from tqdm import tqdm
 import sys
 # from sklearn import tree
 # from subprocess import call
-# from time import sleep
+from time import sleep
+from boruta import BorutaPy
 #TODO: Build the keras hyperparam tuner
 # Save models with pickle to avoid refitting time
 import warnings
 warnings.filterwarnings("ignore")
+"""
+NOTE: I am minMaxScaling the data, but I do not think 
+with a RandomForest this would matter, as the node will
+split on whatever float value of the feature that the greedy algorithm
+at that level chose.
+"""
 class cfb_regressor():
     def __init__(self):
         print('initialize class cfb')
@@ -129,7 +136,7 @@ class cfb_regressor():
         # Find features with correlation greater than 0.90
         corr_matrix = np.abs(self.x.astype(float).corr())
         upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool))
-        to_drop = [column for column in upper.columns if any(upper[column] >= 0.8)]
+        to_drop = [column for column in upper.columns if any(upper[column] >= 0.95)]
         self.drop_cols = to_drop
         self.x_no_corr = self.x.drop(columns=to_drop)
         cols = self.x_no_corr.columns
@@ -152,7 +159,12 @@ class cfb_regressor():
             self.y.reset_index(inplace = True, drop=True)
         self.x_no_corr.drop(columns=['level_0','index'],inplace = True)
         print(f'new feature dataframe shape after outlier removal: {self.x_no_corr.shape}')
-
+        
+        #minMaxScale
+        self.minMax = MinMaxScaler()
+        self.minMax.fit(self.x_no_corr)
+        data_transfom = self.minMax.transform(self.x_no_corr)
+        self.x_no_corr = pd.DataFrame(data_transfom,columns=self.x_no_corr.columns)
         #split data into train and test
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x_no_corr, self.y, train_size=0.8)
         cols = self.x_train.columns.to_list()
@@ -200,7 +212,27 @@ class cfb_regressor():
                                                  max_features='log2', 
                                                  min_samples_split=4, 
                                                  n_estimators=304
-                                                 ).fit(self.x_train,self.y_train)
+                                                 )#.fit(self.x_train,self.y_train)
+            feat_selector = BorutaPy(
+                verbose=2,
+                estimator=RandForclass,
+                n_estimators='auto',
+                max_iter=10  # number of iterations to perform
+            )
+            feat_selector.fit(np.array(self.x_train),np.array(self.y_train))
+            print(feat_selector.support_)
+            print("\n------Support and Ranking for each feature------")
+            self.drop_cols_boruta = []
+            for i in range(len(feat_selector.support_)):
+                if feat_selector.support_[i]:
+                    print(f'Save feature: {self.x_train.columns[i]}')
+                else:
+                    print(f'Drop feature: {self.x_train.columns[i]}')
+                    self.drop_cols_boruta.append(self.x_train.columns[i])
+            print(f'Features to drop based on Boruta algorithm: {self.drop_cols_boruta}')
+            self.x_train.drop(columns=self.drop_cols_boruta, inplace=True)
+            self.x_test.drop(columns=self.drop_cols_boruta, inplace=True)
+            RandForclass.fit(self.x_train,self.y_train)
             # RandForclass = RandomForestRegressor(criterion='absolute_error',
             #                                      bootstrap=True,
             #                                      max_features='sqrt', 
@@ -279,31 +311,39 @@ class cfb_regressor():
                 #dropnans
                 final_data_1.dropna(inplace=True)
                 final_data_2.dropna(inplace=True)
+                #Transform data with minMaxScaler
+                transform_1 = self.minMax.transform(final_data_1)
+                transform_2 = self.minMax.transform(final_data_2)
+                final_data_1 = pd.DataFrame(transform_1,columns=final_data_1.columns)
+                final_data_2 = pd.DataFrame(transform_2,columns=final_data_2.columns)
+                final_data_1.drop(columns=self.drop_cols_boruta, inplace=True)
+                final_data_2.drop(columns=self.drop_cols_boruta, inplace=True)
                 #create data for prediction
                 df_features_1 = final_data_1.dropna().median(axis=0,skipna=True).to_frame().T
                 df_features_2 = final_data_2.dropna().median(axis=0,skipna=True).to_frame().T
                 team_1_total = 0
                 team_2_total = 0
                 #calculate running average short and long intervals
-                data1_long = final_data_1.dropna().rolling(6).median() #long
-                data2_long = final_data_2.dropna().rolling(6).median()
+                data1_long = final_data_1.dropna().rolling(6).mean() #long
+                data2_long = final_data_2.dropna().rolling(6).mean()
                 data1_long = data1_long.iloc[-1:]
                 data2_long = data2_long.iloc[-1:]
-                data1_short = final_data_1.dropna().rolling(2).median() #long
-                data2_short= final_data_2.dropna().rolling(2).median()
+                data1_short = final_data_1.dropna().rolling(2).mean() #long
+                data2_short= final_data_2.dropna().rolling(2).mean()
                 data1_short = data1_short.iloc[-1:]
                 data2_short = data2_short.iloc[-1:]
-                data1_med = final_data_1.dropna().rolling(4).median() #medium
-                data2_med= final_data_2.dropna().rolling(4).median()
+                data1_med = final_data_1.dropna().rolling(4).mean() #medium
+                data2_med= final_data_2.dropna().rolling(4).mean()
                 data1_med = data1_med.iloc[-1:]
                 data2_med = data2_med.iloc[-1:]
                 if not data1_long.isnull().values.any() and not data1_short.isnull().values.any():
-                    data1_long['game_loc'] = team_1_loc
-                    data2_long['game_loc'] = team_2_loc
-                    data1_short['game_loc'] = team_1_loc
-                    data2_short['game_loc'] = team_2_loc
-                    data1_med['game_loc'] = team_1_loc
-                    data2_med['game_loc'] = team_2_loc
+                    if 'game_loc' not in self.drop_cols_boruta:
+                        data1_long['game_loc'] = team_1_loc
+                        data2_long['game_loc'] = team_2_loc
+                        data1_short['game_loc'] = team_1_loc
+                        data2_short['game_loc'] = team_2_loc
+                        data1_med['game_loc'] = team_1_loc
+                        data2_med['game_loc'] = team_2_loc
                     team_1_data_long_avg = model.predict(data1_long)
                     team_2_data_long_avg = model.predict(data2_long)
                     team_1_data_short_avg = model.predict(data1_short)
@@ -315,8 +355,9 @@ class cfb_regressor():
                 print('============================================================')
                 data1 = final_data_1.dropna().median(axis=0,skipna=True).to_frame().T
                 data2 = final_data_2.dropna().median(axis=0,skipna=True).to_frame().T
-                data1['game_loc'] = team_1_loc
-                data2['game_loc'] = team_2_loc
+                if 'game_loc' not in self.drop_cols_boruta:
+                    data1['game_loc'] = team_1_loc
+                    data2['game_loc'] = team_2_loc
                 game_won_team_1 = []
                 game_won_team_2 = []
                 if not data1.isnull().values.any() and not data1.isnull().values.any():
