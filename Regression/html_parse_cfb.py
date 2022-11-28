@@ -56,6 +56,9 @@ def html_to_df_web_scrape(URL,team,year):
     game_loc = []
     start_field = []
     scoring_opp = []
+    power_success = []
+    second_level_yards = []
+    open_field_yards = []
     for trb in tr_body:
         for td in trb.find_all('td'):
             if td.get('data-stat') == "opp_name":
@@ -226,20 +229,58 @@ def html_to_df_web_scrape(URL,team,year):
                     # print(api_response_2.teams.havoc)
                     # print(api_response_2.teams.scoring_opportunities)
                     # print(api_response_2.teams.field_position)
+                    print(api_response_2.teams.rushing)
+                    # [{'line_yards': 103.0,
+                    #      'line_yards_average': 2.6,
+                    #      'open_field_yards': 1,
+                    #      'open_field_yards_average': 0.0,
+                    #      'power_success': 0.727,
+                    #      'second_level_yards': 25,
+                    #      'second_level_yards_average': 0.6,
+                    #      'stuff_rate': 0.154,
+                    #      'team': 'Rutgers'}, {'line_yards': 41.0,
+                    #      'line_yards_average': 1.7,
+                    #      'open_field_yards': 46,
+                    #      'open_field_yards_average': 1.9,
+                    #      'power_success': 1.0,
+                    #      'second_level_yards': 17,
+                    #      'second_level_yards_average': 0.7,
+                    #      'stuff_rate': 0.25,
+                    #      'team': 'Syracuse'}]
+                    # sleep(1000)
                     try:
+                        #havoc
                         if api_response_2.teams.havoc[0].team.capitalize() == team.capitalize():
                             havoc.append(api_response_2.teams.havoc[0].total)
                         else:
                             havoc.append(api_response_2.teams.havoc[1].total)
+                        #field_position
                         if api_response_2.teams.field_position[0].team.capitalize() == team.capitalize():
                             start_field.append(api_response_2.teams.field_position[0].average_start)
                         else:
                             start_field.append(api_response_2.teams.field_position[1].average_start)
+                        #scoring_opportunities
                         if api_response_2.teams.scoring_opportunities[0].team.capitalize() == team.capitalize():
                             scoring_opp.append(api_response_2.teams.scoring_opportunities[0].points_per_opportunity)
                         else:
                             scoring_opp.append(api_response_2.teams.scoring_opportunities[1].points_per_opportunity)
-                            # print(f'{temp1} == {team.capitalize()}: True')
+                        #power_success
+                        if api_response_2.teams.rushing[0].team.capitalize() == team.capitalize():
+                            power_success.append(api_response_2.teams.rushing[0].power_success)
+                        else:
+                            power_success.append(api_response_2.teams.rushing[1].power_success)
+                        #second_level_yards
+                        if api_response_2.teams.rushing[0].team.capitalize() == team.capitalize():
+                            second_level_yards.append(api_response_2.teams.rushing[0].second_level_yards)
+                        else:
+                            second_level_yards.append(api_response_2.teams.rushing[1].second_level_yards)
+                        #open_field_yards
+                        if api_response_2.teams.rushing[0].team.capitalize() == team.capitalize():
+                            open_field_yards.append(api_response_2.teams.rushing[0].open_field_yards)
+                        else:
+                            open_field_yards.append(api_response_2.teams.rushing[1].open_field_yards)
+                        print(open_field_yards)
+                        sleep(100)
                     except:
                         print('Key error - team. most liekly the there are no data. return NaN')
                         havoc.append(nan)
@@ -341,55 +382,55 @@ def cbfd(school):
     print(api_response_2.teams['havoc'][1]['total'])
     print('=========================================')
 
-def get_teams():
-    year_list_find = []
-    year_list = [2022,2021,2019,2018,2017,2016,2015]#,2014,2013,,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000]
-    if exists(join(getcwd(),'year_count.yaml')):
-        with open(join(getcwd(),'year_count.yaml')) as file:
-            year_counts = yaml.load(file, Loader=yaml.FullLoader)
-    else:
-        year_counts = {'year':year_list_find}
-    if year_counts['year']:
-        year_list_check =  year_counts['year']
-        year_list_find = year_counts['year']
-        year_list = [i for i in year_list if i not in year_list_check]
-        print(f'Need data for year: {year_list}')
-    if year_list:
-        for year in year_list:
-            all_teams = Teams(year)
-            team_names = all_teams.dataframes.abbreviation
-            team_names = team_names.sort_values()   
-            final_list = []
-            self.year_store = year
-            for abv in tqdm(team_names):    
-                print(f'current team: {abv}, year: {year}')
-                # team = all_teams(abv)
-                str_combine = 'https://www.sports-reference.com/cfb/schools/' + abv.lower() + '/' + str(self.year_store) + '/gamelog/'
-                df_inst = html_to_df_web_scrape(str_combine,abv.lower(),self.year_store)
-                # df_inst = html_to_df_web_scrape(str_combine)
-                final_list.append(df_inst)
-            output = pd.concat(final_list)
-            output['game_result'] = output['game_result'].str.replace('W','')
-            output['game_result'] = output['game_result'].str.replace('L','')
-            output['game_result'] = output['game_result'].str.replace('(','')
-            output['game_result'] = output['game_result'].str.replace(')','')
-            output['game_result'] = output['game_result'].str.split('-').str[0]
-            output['game_result'] = output['game_result'].str.replace('-','')
-            final_data = output.replace(r'^\s*$', np.NaN, regex=True) #replace empty string with NAN
-            if exists(join(getcwd(),'all_data_regressor.csv')):
-                self.all_data = pd.read_csv(join(getcwd(),'all_data_regressor.csv'))  
-            self.all_data = pd.concat([self.all_data, final_data.dropna()])
-            if not exists(join(getcwd(),'all_data_regressor.csv')):
-                self.all_data.to_csv(join(getcwd(),'all_data_regressor.csv'))
-            self.all_data.to_csv(join(getcwd(),'all_data_regressor.csv'))
-            year_list_find.append(year)
-            print(f'year list after loop: {year_list_find}')
-            with open(join(getcwd(),'year_count.yaml'), 'w') as write_file:
-                yaml.dump(year_counts, write_file)
-                print(f'writing {year} to yaml file')
-    else:
-        self.all_data = pd.read_csv(join(getcwd(),'all_data_regressor.csv'))
-    print('len data: ', len(self.all_data))
+# def get_teams():
+#     year_list_find = []
+#     year_list = [2022,2021,2019,2018,2017,2016,2015]#,2014,2013,,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000]
+#     if exists(join(getcwd(),'year_count.yaml')):
+#         with open(join(getcwd(),'year_count.yaml')) as file:
+#             year_counts = yaml.load(file, Loader=yaml.FullLoader)
+#     else:
+#         year_counts = {'year':year_list_find}
+#     if year_counts['year']:
+#         year_list_check =  year_counts['year']
+#         year_list_find = year_counts['year']
+#         year_list = [i for i in year_list if i not in year_list_check]
+#         print(f'Need data for year: {year_list}')
+#     if year_list:
+#         for year in year_list:
+#             all_teams = Teams(year)
+#             team_names = all_teams.dataframes.abbreviation
+#             team_names = team_names.sort_values()   
+#             final_list = []
+#             self.year_store = year
+#             for abv in tqdm(team_names):    
+#                 print(f'current team: {abv}, year: {year}')
+#                 # team = all_teams(abv)
+#                 str_combine = 'https://www.sports-reference.com/cfb/schools/' + abv.lower() + '/' + str(self.year_store) + '/gamelog/'
+#                 df_inst = html_to_df_web_scrape(str_combine,abv.lower(),self.year_store)
+#                 # df_inst = html_to_df_web_scrape(str_combine)
+#                 final_list.append(df_inst)
+#             output = pd.concat(final_list)
+#             output['game_result'] = output['game_result'].str.replace('W','')
+#             output['game_result'] = output['game_result'].str.replace('L','')
+#             output['game_result'] = output['game_result'].str.replace('(','')
+#             output['game_result'] = output['game_result'].str.replace(')','')
+#             output['game_result'] = output['game_result'].str.split('-').str[0]
+#             output['game_result'] = output['game_result'].str.replace('-','')
+#             final_data = output.replace(r'^\s*$', np.NaN, regex=True) #replace empty string with NAN
+#             if exists(join(getcwd(),'all_data_regressor.csv')):
+#                 self.all_data = pd.read_csv(join(getcwd(),'all_data_regressor.csv'))  
+#             self.all_data = pd.concat([self.all_data, final_data.dropna()])
+#             if not exists(join(getcwd(),'all_data_regressor.csv')):
+#                 self.all_data.to_csv(join(getcwd(),'all_data_regressor.csv'))
+#             self.all_data.to_csv(join(getcwd(),'all_data_regressor.csv'))
+#             year_list_find.append(year)
+#             print(f'year list after loop: {year_list_find}')
+#             with open(join(getcwd(),'year_count.yaml'), 'w') as write_file:
+#                 yaml.dump(year_counts, write_file)
+#                 print(f'writing {year} to yaml file')
+#     else:
+#         self.all_data = pd.read_csv(join(getcwd(),'all_data_regressor.csv'))
+#     print('len data: ', len(self.all_data))
     
 #     print(df)
 # html_to_df_web_scrape('https://www.sports-reference.com/cfb/schools/georgia/2021/gamelog/')

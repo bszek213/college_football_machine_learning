@@ -244,6 +244,36 @@ class cfb_regressor():
             RandForclass_err = np.sqrt(mean_squared_error(self.y_test, RandForclass.predict(self.x_test)))
             print('RandomForestRegressor rmse',RandForclass_err)
             return RandForclass
+    def run_ma_predictions(self,data1,data2,team_1_loc,team_2_loc,model,team_1,team_2):
+        """
+        so far after running MA sub-analysis the best performing MA
+        values are as follows: 2,4,8,14,16
+        """
+        list_ma = [2,4,8,14,16]
+        list_outcomes = []
+        count_1 = 0
+        count_2 = 0
+        if 'game_loc' not in self.drop_cols_boruta:
+            data1['game_loc'] = team_1_loc
+            data2['game_loc'] = team_2_loc
+        for ma in list_ma:
+            data1_ma = data1.dropna().rolling(ma).mean()
+            data2_ma = data2.dropna().rolling(ma).mean()
+            data1_ma = data1_ma.iloc[-1:]
+            data2_ma = data2_ma.iloc[-1:]
+            try:
+                if model.predict(data1_ma) > model.predict(data2_ma):
+                    list_outcomes.append(team_1)
+                    count_1 += 1
+                else:
+                    list_outcomes.append(team_2)
+                    count_2 += 1
+            except:
+                print(f'model.prediction returned NaN for {ma} ma value')
+        print(f'Running average vote across 2,4,8,14,16 game intervals: {list_outcomes}')
+        print(f'{team_1} win count: {count_1}')
+        print(f'{team_2} win count: {count_2}')
+        
     def predict_two_teams(self,model):
         while True:
             try:
@@ -323,35 +353,61 @@ class cfb_regressor():
                 df_features_2 = final_data_2.dropna().median(axis=0,skipna=True).to_frame().T
                 team_1_total = 0
                 team_2_total = 0
-                #calculate running average short and long intervals
-                data1_long = final_data_1.dropna().rolling(6).mean() #long
-                data2_long = final_data_2.dropna().rolling(6).mean()
-                data1_long = data1_long.iloc[-1:]
-                data2_long = data2_long.iloc[-1:]
-                data1_short = final_data_1.dropna().rolling(2).mean() #long
-                data2_short= final_data_2.dropna().rolling(2).mean()
-                data1_short = data1_short.iloc[-1:]
-                data2_short = data2_short.iloc[-1:]
-                data1_med = final_data_1.dropna().rolling(4).mean() #medium
-                data2_med= final_data_2.dropna().rolling(4).mean()
-                data1_med = data1_med.iloc[-1:]
-                data2_med = data2_med.iloc[-1:]
-                if not data1_long.isnull().values.any() and not data1_short.isnull().values.any():
-                    if 'game_loc' not in self.drop_cols_boruta:
-                        data1_long['game_loc'] = team_1_loc
-                        data2_long['game_loc'] = team_2_loc
-                        data1_short['game_loc'] = team_1_loc
-                        data2_short['game_loc'] = team_2_loc
-                        data1_med['game_loc'] = team_1_loc
-                        data2_med['game_loc'] = team_2_loc
-                    team_1_data_long_avg = model.predict(data1_long)
-                    team_2_data_long_avg = model.predict(data2_long)
-                    team_1_data_short_avg = model.predict(data1_short)
-                    team_2_data_short_avg = model.predict(data2_short)
-                    team_1_data_med_avg = model.predict(data1_med)
-                    team_2_data_med_avg = model.predict(data2_med)
-                    print(data1_long)
-                    print(data2_long)
+                # #calculate running average short and long intervals
+                # data1_long = final_data_1.dropna().rolling(6).mean() #long
+                # data2_long = final_data_2.dropna().rolling(6).mean()
+                # data1_long = data1_long.iloc[-1:]
+                # data2_long = data2_long.iloc[-1:]
+                # data1_short = final_data_1.dropna().rolling(2).mean() #long
+                # data2_short= final_data_2.dropna().rolling(2).mean()
+                # data1_short = data1_short.iloc[-1:]
+                # data2_short = data2_short.iloc[-1:]
+                # data1_med = final_data_1.dropna().rolling(4).mean() #medium
+                # data2_med= final_data_2.dropna().rolling(4).mean()
+                # data1_med = data1_med.iloc[-1:]
+                # data2_med = data2_med.iloc[-1:]
+                # if not data1_long.isnull().values.any() and not data1_short.isnull().values.any():
+                #     if 'game_loc' not in self.drop_cols_boruta:
+                #         data1_long['game_loc'] = team_1_loc
+                #         data2_long['game_loc'] = team_2_loc
+                #         data1_short['game_loc'] = team_1_loc
+                #         data2_short['game_loc'] = team_2_loc
+                #         data1_med['game_loc'] = team_1_loc
+                #         data2_med['game_loc'] = team_2_loc
+                #     team_1_data_long_avg = model.predict(data1_long)
+                #     team_2_data_long_avg = model.predict(data2_long)
+                #     team_1_data_short_avg = model.predict(data1_short)
+                #     team_2_data_short_avg = model.predict(data2_short)
+                #     team_1_data_med_avg = model.predict(data1_med)
+                #     team_2_data_med_avg = model.predict(data2_med)
+                #ROLLING AVG CHECK TO SEE IF I CAN GET A MA VALUE THAT PERFECTLY PREDICTS WHAT THE SCORE WAS
+                
+                # range_ma = np.arange(2,len(final_data_1),1)
+                # team_1_actual = int(input(f'{team_1} score: '))
+                # team_2_actual = int(input(f'{team_2} score: '))
+                # team_1_dict = {}
+                # team_2_dict = {}
+                # for val in range_ma:
+                #     data1_check = final_data_1.dropna().rolling(val).mean() #medium
+                #     data2_check= final_data_2.dropna().rolling(val).mean()
+                #     data1_check = data1_check.iloc[-1:]
+                #     data2_check = data2_check.iloc[-1:]
+                #     if 'game_loc' not in self.drop_cols_boruta:
+                #         data1_check['game_loc'] = team_1_loc
+                #         data2_check['game_loc'] = team_2_loc
+                #     try:
+                #         score_1 = model.predict(data1_check)
+                #         score_2 = model.predict(data2_check)
+                #         team_1_dict[val] = abs(score_1[0]-team_1_actual)
+                #         team_2_dict[val] = abs(score_2[0]-team_2_actual)
+                #     except:
+                #         print(f'Prediction failed for MA value {val}')
+                # file1 = open("finding_best_ma.txt", "a")
+                # combine1 = str(min(team_1_dict.items(), key=lambda x: x[1])) + "\n"
+                # combine2 = str(min(team_2_dict.items(), key=lambda x: x[1])) + "\n"
+                # file1.write(combine1)
+                # file1.write(combine2)
+                # file1.close()
                 print('============================================================')
                 data1 = final_data_1.dropna().median(axis=0,skipna=True).to_frame().T
                 data2 = final_data_2.dropna().median(axis=0,skipna=True).to_frame().T
@@ -427,31 +483,33 @@ class cfb_regressor():
                         game_won_team_2.append('last_5_games')
                     print(f'Score prediction for {team_1} last 5 game: {team_1_data_last5[0]} points')
                     print(f'Score prediction for {team_2} last 5 game: {team_2_data_last5[0]} points')
+                # print('===============================================================')
+                # print(f'Score prediction for {team_1} running average long: {team_1_data_long_avg[0]} points')
+                # print(f'Score prediction for {team_2} running average long: {team_2_data_long_avg[0]} points')
+                # print(f'Score prediction for {team_1} running average short: {team_1_data_short_avg[0]} points')
+                # print(f'Score prediction for {team_2} running average short: {team_2_data_short_avg[0]} points')
+                # print(f'Score prediction for {team_1} running average medium: {team_1_data_med_avg[0]} points')
+                # print(f'Score prediction for {team_2} running average medium: {team_2_data_med_avg[0]} points')
                 print('===============================================================')
-                print(f'Score prediction for {team_1} running average long: {team_1_data_long_avg[0]} points')
-                print(f'Score prediction for {team_2} running average long: {team_2_data_long_avg[0]} points')
-                print(f'Score prediction for {team_1} running average short: {team_1_data_short_avg[0]} points')
-                print(f'Score prediction for {team_2} running average short: {team_2_data_short_avg[0]} points')
-                print(f'Score prediction for {team_1} running average medium: {team_1_data_med_avg[0]} points')
-                print(f'Score prediction for {team_2} running average medium: {team_2_data_med_avg[0]} points')
-                print('===============================================================')
-                vote_running_avg = []
-                if team_1_data_long_avg[0] > team_2_data_long_avg[0]:
-                    vote_running_avg.append(team_1)
-                else:
-                    vote_running_avg.append(team_2)
-                if team_1_data_short_avg[0] > team_2_data_short_avg[0]:
-                    vote_running_avg.append(team_1)
-                else:
-                    vote_running_avg.append(team_2)
-                if team_1_data_med_avg[0] > team_2_data_med_avg[0]:
-                    vote_running_avg.append(team_1)
-                else:
-                    vote_running_avg.append(team_2)
+                # vote_running_avg = []
+                # if team_1_data_long_avg[0] > team_2_data_long_avg[0]:
+                #     vote_running_avg.append(team_1)
+                # else:
+                #     vote_running_avg.append(team_2)
+                # if team_1_data_short_avg[0] > team_2_data_short_avg[0]:
+                #     vote_running_avg.append(team_1)
+                # else:
+                #     vote_running_avg.append(team_2)
+                # if team_1_data_med_avg[0] > team_2_data_med_avg[0]:
+                #     vote_running_avg.append(team_1)
+                # else:
+                #     vote_running_avg.append(team_2)
                 print('====Matchup win count=====')
-                print(f'Running average vote across short, medium, and long intervals: {vote_running_avg}')
+                # print(f'Running average vote across short, medium, and long intervals: {vote_running_avg}')
                 print(f'{team_1} total: {team_1_total} : games won: {game_won_team_1}')
                 print(f'{team_2} total: {team_2_total} : games won: {game_won_team_2}')
+                print('====Running average analysis=====')
+                self.run_ma_predictions(final_data_1,final_data_2,team_1_loc,team_2_loc,model,team_1,team_2)
                 print('===============================================================')
                 # score_val_1 = model.predict(df_features_1)
                 # score_val_2 = model.predict(df_features_2)
