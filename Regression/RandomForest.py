@@ -209,9 +209,9 @@ class cfb_regressor():
             print('fit to model that has been tuned')
             RandForclass = RandomForestRegressor(criterion='squared_error',
                                                  bootstrap=True,
-                                                 max_features='log2', 
-                                                 min_samples_split=4, 
-                                                 n_estimators=304
+                                                 max_features='sqrt', 
+                                                 min_samples_split=2, 
+                                                 n_estimators=406
                                                  )#.fit(self.x_train,self.y_train)
             feat_selector = BorutaPy(
                 verbose=2,

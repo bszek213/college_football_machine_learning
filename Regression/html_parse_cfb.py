@@ -59,6 +59,7 @@ def html_to_df_web_scrape(URL,team,year):
     power_success = []
     second_level_yards = []
     open_field_yards = []
+    line_yards = []
     for trb in tr_body:
         for td in trb.find_all('td'):
             if td.get('data-stat') == "opp_name":
@@ -229,7 +230,6 @@ def html_to_df_web_scrape(URL,team,year):
                     # print(api_response_2.teams.havoc)
                     # print(api_response_2.teams.scoring_opportunities)
                     # print(api_response_2.teams.field_position)
-                    print(api_response_2.teams.rushing)
                     # [{'line_yards': 103.0,
                     #      'line_yards_average': 2.6,
                     #      'open_field_yards': 1,
@@ -279,8 +279,11 @@ def html_to_df_web_scrape(URL,team,year):
                             open_field_yards.append(api_response_2.teams.rushing[0].open_field_yards)
                         else:
                             open_field_yards.append(api_response_2.teams.rushing[1].open_field_yards)
-                        print(open_field_yards)
-                        sleep(100)
+                        #line_yards
+                        if api_response_2.teams.rushing[0].team.capitalize() == team.capitalize():
+                            line_yards.append(api_response_2.teams.rushing[0].line_yards)
+                        else:
+                            line_yards.append(api_response_2.teams.rushing[1].line_yards)
                     except:
                         print('Key error - team. most liekly the there are no data. return NaN')
                         havoc.append(nan)
@@ -359,28 +362,33 @@ def html_to_df_web_scrape(URL,team,year):
     pass_int,havoc,
     game_loc,
     scoring_opp,
-    start_field)),
+    start_field,
+    power_success,
+    second_level_yards,
+    open_field_yards,
+    line_yards)),
                 columns =['game_result','turnovers', 'pass_cmp', 'pass_att', 'pass_yds', 'pass_td', 'rush_att', 
                    'rush_yds', 'rush_td', 'rush_yds_per_att', 'tot_plays', 'tot_yds_per_play',
                    'first_down_pass', 'first_down_rush', 'first_down_penalty', 'first_down', 'penalty', 'penalty_yds', 'fumbles_lost',
-                   'pass_int','havoc','game_loc','points_per_opp','average_field_start'])
+                   'pass_int','havoc','game_loc','points_per_opp','average_field_start','power_success','second_level_yards',
+                   'open_field_yards','line_yards'])
     return df
 
-def cbfd(school):
-    configuration = cfbd.Configuration()
-    configuration.api_key['Authorization'] = 'UK4ikHBmxuHDyMlNngTZS8sokyl8Kr4FExP2NRb9G8qaFOUrUhX3xy6+OxQv4oEX'
-    configuration.api_key_prefix['Authorization'] = 'Bearer'
-    api_instance = cfbd.GamesApi(cfbd.ApiClient(configuration))
-    api_response = api_instance.get_games(2022, season_type='regular', 
-                                          home='Northwestern', away='Nebraska',  #add a if statement here to say if null switch home and away
-                                          )
-    api_game = cfbd.GamesApi(cfbd.ApiClient(configuration))
-    api_response_2 = api_game.get_advanced_box_score(api_response[0].id)
-    # api_instance = cfbd.GamesApi(cfbd.ApiClient(configuration))
-    print('=========================================')
-    print(api_response_2.teams['havoc'][0]['total'])
-    print(api_response_2.teams['havoc'][1]['total'])
-    print('=========================================')
+# def cbfd(school):
+#     configuration = cfbd.Configuration()
+#     configuration.api_key['Authorization'] = 'UK4ikHBmxuHDyMlNngTZS8sokyl8Kr4FExP2NRb9G8qaFOUrUhX3xy6+OxQv4oEX'
+#     configuration.api_key_prefix['Authorization'] = 'Bearer'
+#     api_instance = cfbd.GamesApi(cfbd.ApiClient(configuration))
+#     api_response = api_instance.get_games(2022, season_type='regular', 
+#                                           home='Northwestern', away='Nebraska',  #add a if statement here to say if null switch home and away
+#                                           )
+#     api_game = cfbd.GamesApi(cfbd.ApiClient(configuration))
+#     api_response_2 = api_game.get_advanced_box_score(api_response[0].id)
+#     # api_instance = cfbd.GamesApi(cfbd.ApiClient(configuration))
+#     print('=========================================')
+#     print(api_response_2.teams['havoc'][0]['total'])
+#     print(api_response_2.teams['havoc'][1]['total'])
+#     print('=========================================')
 
 # def get_teams():
 #     year_list_find = []
